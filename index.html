@@ -548,7 +548,7 @@
             return `exam_draft_${currentUser ? currentUser.emp_id : 'guest'}_${examTitle}`;
         }
 
-        // 自动保存答题草稿至 localStorage
+        // 自动保存答题草稿 (完美兼容单选框 Radio、复选框 Checkbox 与文本框)
         function saveExamDraft(examTitle) {
             if (!currentUser) return;
             const key = getDraftKey(examTitle);
@@ -562,6 +562,8 @@
                 if (input.type === 'checkbox') {
                     if (!draft[name]) draft[name] = [];
                     if (input.checked) draft[name].push(input.value);
+                } else if (input.type === 'radio') {
+                    if (input.checked) draft[name] = input.value; // 👈 记录单选框的值
                 } else {
                     draft[name] = input.value;
                 }
@@ -570,7 +572,7 @@
             localStorage.setItem(key, JSON.stringify(draft));
         }
 
-        // 从 localStorage 自动还原答题草稿
+        // 自动还原答题草稿
         function restoreExamDraft(examTitle) {
             if (!currentUser) return;
             const key = getDraftKey(examTitle);
@@ -582,13 +584,21 @@
                 Object.keys(draft).forEach(name => {
                     const val = draft[name];
                     if (Array.isArray(val)) {
+                        // 还原复选框
                         val.forEach(optVal => {
                             const cb = document.querySelector(`input[name="${name}"][value="${CSS.escape(optVal)}"]`);
                             if (cb) cb.checked = true;
                         });
                     } else {
-                        const el = document.querySelector(`[name="${name}"]`);
-                        if (el) el.value = val;
+                        // 还原单选框 (判断题)
+                        const radio = document.querySelector(`input[name="${name}"][value="${CSS.escape(val)}"]`);
+                        if (radio && radio.type === 'radio') {
+                            radio.checked = true;
+                        } else {
+                            // 还原文本框
+                            const textEl = document.querySelector(`[name="${name}"]`);
+                            if (textEl) textEl.value = val;
+                        }
                     }
                 });
             } catch (e) {
