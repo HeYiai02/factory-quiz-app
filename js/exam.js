@@ -184,17 +184,26 @@ function startExam(title, qIds, startTimeStr, endTimeStr) {
             ${examQs.map((q, idx) => {
                 let interactiveHtml = '';
 
-                if (q.type === '选择题' && Array.isArray(q.options) && q.options.length > 0) {
-                    interactiveHtml = `
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 my-2.5">
-                            ${q.options.map((opt) => `
-                                <label class="flex items-start gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/60 transition">
-                                    <input type="checkbox" name="q_${q.id}" value="${opt}" class="exam-input mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
-                                    <span class="text-xs text-slate-700 leading-snug">${opt}</span>
-                                </label>
-                            `).join('')}
-                        </div>
-                    `;
+                if (q.type === '选择题') {
+                    if (Array.isArray(q.options) && q.options.length > 0) {
+                        interactiveHtml = `
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 my-2.5">
+                                ${q.options.map((opt) => `
+                                    <label class="flex items-start gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/60 transition">
+                                        <input type="checkbox" name="q_${q.id}" value="${opt}" class="exam-input mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-xs text-slate-700 leading-snug">${opt}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        `;
+                    } else {
+                        // 兜底保护：若选择题缺少 options 数组，提供单行输入框，避免落入 textarea
+                        interactiveHtml = `
+                            <div class="mt-2">
+                                <input type="text" name="q_${q.id}" placeholder="请在此输入选择选项（例如：A 或 B,C）..." class="exam-input w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                            </div>
+                        `;
+                    }
                 } else if (q.type === '判断题') {
                     interactiveHtml = `
                         <div class="flex gap-4 my-2.5">
