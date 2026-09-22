@@ -125,12 +125,29 @@
                         </button>
                     </div>
 
-                    <!-- 列表与搜索 -->
-                    <div class="space-y-3">
-                        <input type="text" id="adminManageSearch" oninput="renderAdminManageList()" placeholder="搜索要修改的题目关键字..." class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500">
-                        <div id="adminManageList" class="space-y-2 max-h-[500px] overflow-y-auto">
-                            <!-- JS 动态渲染列表 -->
+                    <!-- 组卷同款三维筛选栏 -->
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2 text-xs">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <select id="adminManageSourceSelect" onchange="renderAdminManageList()" class="w-full p-2 border rounded-md bg-white text-slate-700">
+                                <option value="all">所有试卷来源</option>
+                                <option value="TCN后备相关考核">TCN后备相关考核</option>
+                                <option value="应急响应相关考核">应急响应相关考核</option>
+                                <option value="TCN相关考核">TCN相关考核</option>
+                            </select>
+                            <select id="adminManageTypeSelect" onchange="renderAdminManageList()" class="w-full p-2 border rounded-md bg-white text-slate-700">
+                                <option value="all">所有题型</option>
+                                <option value="填空题">填空题</option>
+                                <option value="选择题">选择题</option>
+                                <option value="判断题">判断题</option> <!-- 👈 支持判断题 -->
+                                <option value="简答题">简答题</option>
+                            </select>
                         </div>
+                        <input type="text" id="adminManageSearch" oninput="renderAdminManageList()" placeholder="搜索题目关键字..." class="w-full p-2 border rounded-md bg-white outline-none">
+                    </div>
+
+                    <!-- 题目列表 -->
+                    <div id="adminManageList" class="space-y-2 max-h-[500px] overflow-y-auto">
+                        <!-- JS 动态渲染 -->
                     </div>
                 </div>
 
@@ -245,30 +262,43 @@
                             <label class="block font-semibold mb-1">所属试卷/模块</label>
                             <input type="text" id="formSource" placeholder="例如：TCN相关考核" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block font-semibold mb-1">题目类型</label>
-                                <select id="formType" onchange="toggleFormOptions()" class="w-full p-2 border rounded-lg outline-none bg-white">
-                                    <option value="填空题">填空题</option>
-                                    <option value="选择题">选择题</option>
-                                    <option value="简答题">简答题</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label class="block font-semibold mb-1">题目类型</label>
+                            <select id="formType" onchange="toggleFormOptions()" class="w-full p-2 border rounded-lg outline-none bg-white">
+                                <option value="填空题">填空题</option>
+                                <option value="选择题">选择题</option>
+                                <option value="判断题">判断题</option> <!-- 👈 支持判断题 -->
+                                <option value="简答题">简答题</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block font-semibold mb-1">题目描述</label>
                             <textarea id="formQuestion" placeholder="输入题目内容..." class="w-full p-2 border rounded-lg outline-none h-20 focus:ring-2 focus:ring-indigo-500"></textarea>
                         </div>
 
-                        <!-- 选择题选项设置 -->
-                        <div id="formOptionsArea" class="hidden">
-                            <label class="block font-semibold mb-1">选择题选项 (每行一个选项)</label>
-                            <textarea id="formOptions" placeholder="A. 选项一&#10;B. 选项二&#10;C. 选项三" class="w-full p-2 border rounded-lg outline-none h-20 focus:ring-2 focus:ring-indigo-500"></textarea>
+                        <!-- 👈 动态选择题选项列表（支持按钮新增、删除） -->
+                        <div id="formOptionsArea" class="hidden space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <div class="flex justify-between items-center">
+                                <label class="block font-semibold text-slate-700">选择题选项</label>
+                                <button type="button" onclick="addOptionInputRow('')" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold flex items-center gap-1">
+                                    <i class="fa-solid fa-plus"></i> 添加选项
+                                </button>
+                            </div>
+                            <div id="formOptionsList" class="space-y-2">
+                                <!-- JS 动态渲染选项输入框 -->
+                            </div>
                         </div>
 
+                        <!-- 标准答案输入 + 判断题快捷按钮 -->
                         <div>
-                            <label class="block font-semibold mb-1">标准答案</label>
-                            <textarea id="formAnswer" placeholder="输入标准答案..." class="w-full p-2 border rounded-lg outline-none h-20 focus:ring-2 focus:ring-indigo-500"></textarea>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block font-semibold">标准答案</label>
+                                <div id="judgmentHelperArea" class="hidden gap-1.5">
+                                    <button type="button" onclick="setJudgmentAnswer('正确')" class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100">正确 (对)</button>
+                                    <button type="button" onclick="setJudgmentAnswer('错误')" class="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100">错误 (错)</button>
+                                </div>
+                            </div>
+                            <textarea id="formAnswer" placeholder="输入标准答案..." class="w-full p-2 border rounded-lg outline-none h-16 focus:ring-2 focus:ring-indigo-500"></textarea>
                         </div>
 
                         <!-- 题目图片上传 -->
@@ -477,25 +507,37 @@
             }
 
             container.innerHTML = list.map((q, idx) => `
-                <div class="bg-white p-4 rounded-xl border border-slate-200">
-                    <div class="text-xs text-indigo-600 font-semibold mb-1">[${q.source}] ${q.type}</div>
-                    <div class="font-medium text-sm text-slate-800">${idx+1}. ${q.question}</div>
-                    ${window.reviewMode === 'recite' ? 
-                        `<div class="mt-2 p-2 bg-amber-50 text-amber-900 rounded text-xs border border-amber-200 font-medium">标答：${q.answer}</div>` : 
-                        `<details class="mt-2 text-xs text-slate-400"><summary class="cursor-pointer text-indigo-600">点击查看答案</summary><div class="mt-1 text-slate-700 whitespace-pre-line">${q.answer}</div></details>`}
-                </div>
-            `).join('');
+                    <div class="bg-white p-4 rounded-xl border border-slate-200">
+                        <div class="text-xs text-indigo-600 font-semibold mb-1">[${q.source}] ${q.type}</div>
+                        <div class="font-medium text-sm text-slate-800">${idx+1}. ${q.question}</div>
+                        
+                        <!-- 👈 在此处插入：如果题目有图片则显示 -->
+                        ${q.image_url ? `<div class="my-2"><img src="${q.image_url}" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50"></div>` : ''}
+
+                        ${window.reviewMode === 'recite' ?  
+                            `<div class="mt-2 p-2 bg-amber-50 text-amber-900 rounded text-xs border border-amber-200 font-medium">标答：${q.answer}</div>` : 
+                            `<details class="mt-2 text-xs text-slate-400"><summary class="cursor-pointer text-indigo-600">点击查看答案</summary><div class="mt-1 text-slate-700 whitespace-pre-line">${q.answer}</div></details>`}
+                    </div>
+                `).join('');
         }
 
         // 视图 2：随机自测
         function generateRandomQuiz() {
             const shuffled = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, 10);
             const container = document.getElementById('quizContainer');
+            
             container.innerHTML = shuffled.map((q, idx) => `
                 <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
                     <div class="font-medium text-sm">${idx+1}. ${q.question}</div>
-                    <textarea placeholder="在此填写你的答案..." class="w-full border p-2 rounded text-xs h-16"></textarea>
-                    <details class="text-xs text-slate-400"><summary class="cursor-pointer text-indigo-600">对照标准答案</summary><div class="mt-1 text-emerald-700 font-medium">${q.answer}</div></details>
+                    
+                    <!-- 👈 在此处插入：如果题目有图片则显示 -->
+                    ${q.image_url ? `<div class="my-2"><img src="${q.image_url}" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50"></div>` : ''}
+
+                    <textarea placeholder="在此填写你的答案..." class="w-full border p-2.5 rounded-xl text-xs h-20 outline-none"></textarea>
+                    <details class="text-xs text-slate-400">
+                        <summary class="cursor-pointer text-indigo-600">对照标准答案</summary>
+                        <div class="mt-1 text-emerald-700 font-medium whitespace-pre-line">${q.answer}</div>
+                    </details>
                 </div>
             `).join('');
         }
@@ -579,14 +621,18 @@
 
         // 渲染管理端题目列表
         function renderAdminManageList() {
+            const source = document.getElementById('adminManageSourceSelect')?.value || 'all';
+            const type = document.getElementById('adminManageTypeSelect')?.value || 'all';
             const kw = (document.getElementById('adminManageSearch')?.value || '').toLowerCase().trim();
             const container = document.getElementById('adminManageList');
             if (!container) return;
 
-            const list = (window.allQuestions || []).filter(q => 
-                (q.question || '').toLowerCase().includes(kw) || 
-                (q.source || '').toLowerCase().includes(kw)
-            );
+            const list = (window.allQuestions || []).filter(q => {
+                const matchSrc = source === 'all' || q.source === source;
+                const matchType = type === 'all' || q.type === type;
+                const matchKw = !kw || (q.question || '').toLowerCase().includes(kw) || (q.answer || '').toLowerCase().includes(kw);
+                return matchSrc && matchType && matchKw;
+            });
 
             if (list.length === 0) {
                 container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">没有找到相关题目</div>`;
@@ -610,6 +656,131 @@
                 </div>
             `).join('');
         }
+
+        // 3. 动态增删选择题选项输入行逻辑
+        function renderOptionInputs(optionsArray = []) {
+            const listContainer = document.getElementById('formOptionsList');
+            if (!listContainer) return;
+
+            // 默认提供 4 个空选项 (A, B, C, D)
+            const opts = optionsArray.length > 0 ? optionsArray : ['', '', '', ''];
+            listContainer.innerHTML = '';
+            
+            opts.forEach(optVal => addOptionInputRow(optVal));
+        }
+
+        function addOptionInputRow(val = '') {
+            const listContainer = document.getElementById('formOptionsList');
+            if (!listContainer) return;
+
+            // 剥离传入的 "A. " 前缀以供干净输入
+            const cleanVal = val.replace(/^[A-Z]\.\s*/, '');
+
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 option-row';
+            div.innerHTML = `
+                <span class="option-prefix font-bold text-slate-400 text-xs w-4"></span>
+                <input type="text" value="${cleanVal.replace(/"/g, '&quot;')}" placeholder="输入选项内容..." class="option-input flex-1 p-2 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                <button type="button" onclick="removeOptionInputRow(this)" class="text-rose-400 hover:text-rose-600 text-xs p-1" title="删除该选项">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            listContainer.appendChild(div);
+            updateOptionPrefixes();
+        }
+
+        function removeOptionInputRow(btn) {
+            const row = btn.closest('.option-row');
+            if (row) {
+                row.remove();
+                updateOptionPrefixes();
+            }
+        }
+
+        function updateOptionPrefixes() {
+            const rows = document.querySelectorAll('#formOptionsList .option-row');
+            rows.forEach((row, idx) => {
+                const prefixSpan = row.querySelector('.option-prefix');
+                if (prefixSpan) prefixSpan.innerText = `${String.fromCharCode(65 + idx)}.`;
+            });
+        }
+
+        function getCollectedOptionValues() {
+            const rows = document.querySelectorAll('#formOptionsList .option-row');
+            const result = [];
+            rows.forEach((row, idx) => {
+                const input = row.querySelector('.option-input');
+                const val = input ? input.value.trim() : '';
+                if (val) {
+                    result.push(`${String.fromCharCode(65 + idx)}. ${val}`);
+                }
+            });
+            return result;
+        }
+
+        // 判断题设置助手
+        function setJudgmentAnswer(val) {
+            document.getElementById('formAnswer').value = val;
+        }
+
+        function toggleFormOptions() {
+            const type = document.getElementById('formType').value;
+            const optArea = document.getElementById('formOptionsArea');
+            const judgmentHelper = document.getElementById('judgmentHelperArea');
+
+            if (type === '选择题') {
+                optArea.classList.remove('hidden');
+            } else {
+                optArea.classList.add('hidden');
+            }
+
+            if (type === '判断题') {
+                judgmentHelper.classList.remove('hidden');
+                judgmentHelper.classList.add('flex');
+            } else {
+                judgmentHelper.classList.add('hidden');
+                judgmentHelper.classList.remove('flex');
+            }
+        }
+
+        // 4. 打开弹窗时初始化选项列表
+        function openQuestionModal(qId = null) {
+            const modal = document.getElementById('questionModal');
+            modal.classList.remove('hidden');
+
+            document.getElementById('editQId').value = qId || '';
+            document.getElementById('modalTitle').innerText = qId ? '编辑题目' : '新增题目';
+            document.getElementById('formImageFile').value = '';
+
+            if (qId) {
+                const q = window.allQuestions.find(item => item.id === qId);
+                if (q) {
+                    document.getElementById('formSource').value = q.source || '';
+                    document.getElementById('formType').value = q.type || '填空题';
+                    document.getElementById('formQuestion').value = q.question || '';
+                    document.getElementById('formAnswer').value = q.answer || '';
+                    
+                    renderOptionInputs(Array.isArray(q.options) ? q.options : []);
+
+                    if (q.image_url) {
+                        document.getElementById('currentImagePreview').classList.remove('hidden');
+                        document.getElementById('previewImgSrc').src = q.image_url;
+                    } else {
+                        document.getElementById('currentImagePreview').classList.add('hidden');
+                    }
+                }
+            } else {
+                document.getElementById('formSource').value = '';
+                document.getElementById('formType').value = '填空题';
+                document.getElementById('formQuestion').value = '';
+                document.getElementById('formAnswer').value = '';
+                renderOptionInputs([]); // 默认初始化 4 个空白选项
+                document.getElementById('currentImagePreview').classList.add('hidden');
+            }
+
+            toggleFormOptions();
+        }
+
 
         // 打开新增/编辑弹窗
         function openQuestionModal(qId = null) {
@@ -691,14 +862,18 @@
             const type = document.getElementById('formType').value;
             const question = document.getElementById('formQuestion').value.trim();
             const answer = document.getElementById('formAnswer').value.trim();
-            const rawOptions = document.getElementById('formOptions').value.trim();
             const imageFile = document.getElementById('formImageFile').files[0];
 
             if (!source || !question || !answer) {
                 return alert('请填写完整的内容（所属模块、题目描述、标准答案）！');
             }
 
-            const options = type === '选择题' ? rawOptions.split('\n').map(o => o.trim()).filter(Boolean) : [];
+            // 从动态选项行收集选项
+            const options = type === '选择题' ? getCollectedOptionValues() : [];
+
+            if (type === '选择题' && options.length === 0) {
+                return alert('选择题请至少填写一个有效选项！');
+            }
 
             const saveBtn = document.getElementById('btnSaveQ');
             saveBtn.disabled = true;
@@ -713,28 +888,19 @@
                     if (existingQ) imageUrl = existingQ.image_url;
                 }
 
-                const payload = {
-                    source,
-                    type,
-                    question,
-                    answer,
-                    options,
-                    image_url: imageUrl
-                };
+                const payload = { source, type, question, answer, options, image_url: imageUrl };
 
                 if (qId) {
-                    // 更新操作
                     const { error } = await window.db.from('questions').update(payload).eq('id', parseInt(qId));
                     if (error) throw error;
                 } else {
-                    // 新增操作
                     const { error } = await window.db.from('questions').insert([payload]);
                     if (error) throw error;
                 }
 
                 alert('🎉 题目保存成功！');
                 closeQuestionModal();
-                await loadQuestions(); // 重新加载题库
+                await loadQuestions();
                 renderAdminManageList();
             } catch (err) {
                 console.error("保存失败:", err);
@@ -870,7 +1036,7 @@
             }
         }
 
-        // 开始答题（集成草稿自动恢复、实时防刷保存与到期只读锁定）
+        // 开始答题（集成选择题、判断题、填空题、简答题多控件渲染与锁定逻辑）
         function startExam(title, qIds, startTimeStr, endTimeStr) {
             const paperArea = document.getElementById('paperArea');
             if (!paperArea) return;
@@ -898,6 +1064,8 @@
                 <div id="examQuestionsContainer" class="space-y-6 pt-2">
                     ${examQs.map((q, idx) => {
                         let interactiveHtml = '';
+
+                        // 1. 选择题控件 (复选/多选)
                         if (q.type === '选择题' && Array.isArray(q.options) && q.options.length > 0) {
                             interactiveHtml = `
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 my-2.5">
@@ -909,13 +1077,32 @@
                                     `).join('')}
                                 </div>
                             `;
-                        } else if (q.type === '填空题') {
+                        } 
+                        // 2. 判断题控件 (新增：单选 Radio，仅能在“正确”与“错误”中二选一)
+                        else if (q.type === '判断题') {
+                            interactiveHtml = `
+                                <div class="flex gap-4 my-2.5">
+                                    <label class="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/60 transition flex-1">
+                                        <input type="radio" name="q_${q.id}" value="正确" class="exam-input text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-xs text-slate-700 font-semibold">正确 (对)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/60 transition flex-1">
+                                        <input type="radio" name="q_${q.id}" value="错误" class="exam-input text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-xs text-slate-700 font-semibold">错误 (错)</span>
+                                    </label>
+                                </div>
+                            `;
+                        } 
+                        // 3. 填空题控件 (单行输入框)
+                        else if (q.type === '填空题') {
                             interactiveHtml = `
                                 <div class="mt-2">
                                     <input type="text" name="q_${q.id}" placeholder="请在此输入填空答案..." class="exam-input w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 outline-none transition">
                                 </div>
                             `;
-                        } else {
+                        } 
+                        // 4. 简答题控件 (多行大文本框)
+                        else {
                             interactiveHtml = `
                                 <div class="mt-2">
                                     <textarea name="q_${q.id}" placeholder="请在此输入简答题回答..." class="exam-input w-full border border-slate-200 p-2.5 rounded-xl text-xs h-28 focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed transition"></textarea>
@@ -928,6 +1115,11 @@
                                 <div class="font-medium text-sm text-slate-800 leading-snug">
                                     <span class="text-indigo-600 font-bold">#${idx + 1} [${q.type}]</span>${q.question}
                                 </div>
+
+                                <!-- 题目附图 (若有图片自动渲染) -->
+                                ${q.image_url ? `<div class="my-2"><img src="${q.image_url}" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50"></div>` : ''}
+
+                                <!-- 题型交互控件 -->
                                 ${interactiveHtml}
                             </div>
                         `;
@@ -935,16 +1127,16 @@
                 </div>
             `;
 
-            // 1. 还原历史草稿
+            // 1. 从 localStorage 还原防刷新草稿
             restoreExamDraft(title);
 
-            // 2. 为所有输入框绑定自动保存事件
+            // 2. 绑定输入/单选/复选框自动实时保存草稿
             document.querySelectorAll('.exam-input').forEach(input => {
                 input.addEventListener('input', () => saveExamDraft(title));
                 input.addEventListener('change', () => saveExamDraft(title));
             });
 
-            // 时间格式化辅助
+            // 倒计时辅助函数
             const formatMs = (ms) => {
                 const totalSec = Math.max(0, Math.floor(ms / 1000));
                 const h = String(Math.floor(totalSec / 3600)).padStart(2, '0');
@@ -953,7 +1145,7 @@
                 return `${h}:${m}:${s}`;
             };
 
-            // 控制题目表单的锁死与只读
+            // 锁死作答区域辅助函数
             const setExamLocked = (isLocked) => {
                 const inputs = document.querySelectorAll('.exam-input');
                 const container = document.getElementById('examQuestionsContainer');
@@ -967,6 +1159,7 @@
             const startTime = new Date(startTimeStr).getTime();
             const endTime = new Date(endTimeStr).getTime();
 
+            // 实时更新倒计时状态
             const updateTimer = () => {
                 const now = Date.now();
                 const timerBar = document.getElementById('examTimerBar');
@@ -1168,6 +1361,7 @@
             switch(type) {
                 case '填空题': return 'bg-blue-100 text-blue-700';
                 case '选择题': return 'bg-purple-100 text-purple-700';
+                case '判断题': return 'bg-emerald-100 text-emerald-700'; // 👈 判断题样式
                 case '简答题': return 'bg-orange-100 text-orange-700';
                 default: return 'bg-slate-100 text-slate-600';
             }
