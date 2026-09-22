@@ -236,7 +236,11 @@ function startExam(title, qIds, startTimeStr, endTimeStr) {
                         <div class="font-medium text-sm text-slate-800 leading-snug">
                             <span class="text-indigo-600 font-bold">#${idx + 1} [${q.type}]</span>${q.question}
                         </div>
-                        ${q.image_url ? `<div class="my-2"><img src="${q.image_url}" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50"></div>` : ''}
+                        ${q.image_url ? `
+                            <div class="my-2">
+                                <img src="${q.image_url}" onclick="previewImage('${q.image_url}')" title="点击查看大图" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50 cursor-pointer hover:opacity-90 transition shadow-sm">
+                            </div>
+                        ` : ''}
                         ${interactiveHtml}
                     </div>
                 `;

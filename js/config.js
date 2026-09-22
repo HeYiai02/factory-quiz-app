@@ -51,3 +51,24 @@ function getTypeBadgeClass(type) {
         default: return 'bg-slate-100 text-slate-600';
     }
 }
+
+// 全局图片大图预览控制函数
+function previewImage(src) {
+    if (!src) return;
+    const modal = document.getElementById('imagePreviewModal');
+    const targetImg = document.getElementById('imagePreviewTarget');
+    if (modal && targetImg) {
+        targetImg.src = src;
+        modal.classList.remove('hidden');
+    }
+}
+
+function closeImagePreview() {
+    const modal = document.getElementById('imagePreviewModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+window.previewImage = previewImage;
+window.closeImagePreview = closeImagePreview;

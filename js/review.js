@@ -42,8 +42,11 @@ function renderReviewQuestions() {
             </div>
             <div class="font-medium text-sm text-slate-800 leading-snug">${idx+1}. ${q.question}</div>
             
-            ${q.image_url ? `<div class="my-2"><img src="${q.image_url}" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50"></div>` : ''}
-
+            ${q.image_url ? `
+                <div class="my-2">
+                    <img src="${q.image_url}" onclick="previewImage('${q.image_url}')" title="点击查看大图" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50 cursor-pointer hover:opacity-90 transition shadow-sm">
+                </div>
+            ` : ''}
             ${q.type === '选择题' && Array.isArray(q.options) && q.options.length > 0 ? `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 my-2.5">
                     ${q.options.map(opt => `<div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-xs text-slate-700">${opt}</div>`).join('')}
@@ -115,8 +118,11 @@ function generateRandomQuiz() {
                     <span class="font-medium text-sm text-slate-800">#${idx+1} ${q.question}</span>
                 </div>
                 
-                ${q.image_url ? `<div class="my-2"><img src="${q.image_url}" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50"></div>` : ''}
-
+                ${q.image_url ? `
+                    <div class="my-2">
+                        <img src="${q.image_url}" onclick="previewImage('${q.image_url}')" title="点击查看大图" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50 cursor-pointer hover:opacity-90 transition shadow-sm">
+                    </div>
+                ` : ''}
                 ${interactiveHtml}
 
                 <details class="text-xs text-slate-400 pt-1">
