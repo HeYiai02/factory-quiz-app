@@ -12,12 +12,6 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
-    <!-- 填入你的 Supabase 配置信息 -->
-    <script>
-        const SUPABASE_URL = "YOUR_SUPABASE_URL"; 
-        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
-        const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    </script>
 
     <!-- 登录界面 -->
     <div id="loginView" class="min-h-screen flex items-center justify-center p-4">
@@ -118,29 +112,54 @@
     </div>
 
     <script>
-        let currentUser = null;
-        let allQuestions = [];
-        let reviewMode = 'recite';
+// 1. 【必须放在最顶部】声明全局变量
+    let db = null;
+    let currentUser = null;
+    let allQuestions = [];
+    let reviewMode = 'recite';
 
-        // 登录逻辑
-        async function handleLogin() {
-            const empId = document.getElementById('empIdInput').value.trim();
-            if (!empId) return alert('请输入工号');
-
-            const { data, error } = await db.from('users').select('*').eq('emp_id', empId).single();
-            if (error || !data) return alert('工号不存在，请联系管理员！');
-
-            currentUser = data;
-            document.getElementById('userInfo').innerText = `${currentUser.name} (${currentUser.role === 'admin' ? '管理员' : '员工'})`;
-            document.getElementById('loginView').classList.add('hidden');
-            document.getElementById('mainView').classList.remove('hidden');
-
-            if (currentUser.role === 'admin') {
-                document.getElementById('tab-admin').classList.remove('hidden');
-            }
-
-            await loadQuestions();
+    // 2. 初始化系统与 Supabase 客户端
+    async function initSystem() {
+        try {
+            const response = await fetch('/api/config');
+            const config = await response.json();
+            
+            // 注意：这里不要加 const 或 let，直接给外层的全局变量 db 赋值
+            db = supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+            console.log("Supabase 初始化成功");
+        } catch (error) {
+            console.error("无法加载系统配置:", error);
+            alert("系统配置加载失败，请检查 Cloudflare 环境变量设置。");
         }
+    }
+
+    // 页面加载完成后立即执行初始化
+    window.addEventListener('DOMContentLoaded', initSystem);
+
+    // 3. 登录逻辑
+    async function handleLogin() {
+        // 增加防御性校验：如果 API 还在请求中，提示用户稍等
+        if (!db) {
+            return alert('系统配置正在加载中，请稍等 1~2 秒后重试登录...');
+        }
+
+        const empId = document.getElementById('empIdInput').value.trim();
+        if (!empId) return alert('请输入工号');
+
+        const { data, error } = await db.from('users').select('*').eq('emp_id', empId).single();
+        if (error || !data) return alert('工号不存在，请联系管理员！');
+
+        currentUser = data;
+        document.getElementById('userInfo').innerText = `${currentUser.name} (${currentUser.role === 'admin' ? '管理员' : '员工'})`;
+        document.getElementById('loginView').classList.add('hidden');
+        document.getElementById('mainView').classList.remove('hidden');
+
+        if (currentUser.role === 'admin') {
+            document.getElementById('tab-admin').classList.remove('hidden');
+        }
+
+        await loadQuestions();
+    }
 
         function logout() { location.reload(); }
 
