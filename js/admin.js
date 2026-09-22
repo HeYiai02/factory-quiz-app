@@ -125,6 +125,7 @@ function setJudgmentAnswer(val) {
         answerTextarea.value = val;
     }
 }
+// 1. 题型切换时，控制答案输入控件的显隐
 // 2. 题型切换控制：判断题自动开启【只读】并弹出按钮
 function toggleFormOptions() {
     const type = document.getElementById('formType').value;
