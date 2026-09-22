@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>工厂知识点考核平台</title>
-    <!-- 引入样式与依赖库 -->
+    <!-- 引入样式与第三方依赖库 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,8 +12,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
-
-    <!-- 登录界面 -->
+    <!-- 1. 登录界面 -->
     <div id="loginView" class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
             <div class="text-center mb-6">
@@ -24,10 +23,8 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">员工工号</label>
-                    <!-- 已将 placeholder 改为 "例：0038***" -->
                     <input type="text" id="empIdInput" placeholder="例：0038***" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
                 </div>
-                <!-- 增加 id="loginBtn" 以便控制 Loading 状态 -->
                 <button id="loginBtn" onclick="handleLogin()" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
                     登录平台
                 </button>
@@ -35,7 +32,7 @@
         </div>
     </div>
 
-    <!-- 主界面 -->
+    <!-- 2. 主界面 -->
     <div id="mainView" class="hidden">
         <header class="bg-indigo-700 text-white sticky top-0 z-50 shadow-md">
             <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
@@ -50,13 +47,13 @@
             </div>
         </header>
 
-        <!-- 导航 Tab -->
+        <!-- 一级导航 Tab -->
         <nav class="bg-white border-b border-slate-200 sticky top-[52px] z-40">
             <div class="max-w-6xl mx-auto px-4 flex gap-6 text-sm font-medium">
-                <button onclick="switchTab('review')" id="tab-review" class="py-3 border-b-2 border-indigo-600 text-indigo-600">题库复习</button>
+                <button onclick="switchTab('review')" id="tab-review" class="py-3 border-b-2 border-indigo-600 text-indigo-600 font-bold">题库复习</button>
                 <button onclick="switchTab('quiz')" id="tab-quiz" class="py-3 text-slate-500 hover:text-indigo-600">随机自测</button>
                 <button onclick="switchTab('exam')" id="tab-exam" class="py-3 text-slate-500 hover:text-indigo-600">在线考试</button>
-                <button onclick="switchTab('admin')" id="tab-admin" class="hidden py-3 text-amber-600 hover:text-amber-700 font-bold"><i class="fa-solid fa-screwdriver-wrench mr-1"></i>管理组卷</button>
+                <button onclick="switchTab('admin')" id="tab-admin" class="hidden py-3 text-amber-600 hover:text-amber-700 font-bold"><i class="fa-solid fa-screwdriver-wrench mr-1"></i>管理控制台</button>
             </div>
         </nav>
 
@@ -68,7 +65,7 @@
                         <button id="btnRecite" onclick="setReviewMode('recite')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white">背题模式</button>
                         <button id="btnQuiz" onclick="setReviewMode('self')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600">刷题模式</button>
                     </div>
-                    <input type="text" id="reviewSearch" oninput="renderReviewQuestions()" placeholder="搜索关键词..." class="px-3 py-1.5 border rounded-lg text-xs w-full md:w-64">
+                    <input type="text" id="reviewSearch" oninput="renderReviewQuestions()" placeholder="搜索关键词..." class="px-3 py-1.5 border rounded-lg text-xs w-full md:w-64 outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div id="reviewContainer" class="space-y-3"></div>
             </section>
@@ -77,12 +74,12 @@
             <section id="view-quiz" class="hidden space-y-4">
                 <div class="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center">
                     <span class="text-sm font-bold">随机抽取 10 道题目</span>
-                    <button onclick="generateRandomQuiz()" class="px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium">重新抽题</button>
+                    <button onclick="generateRandomQuiz()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium">重新抽题</button>
                 </div>
                 <div id="quizContainer" class="space-y-3"></div>
             </section>
 
-            <!-- 视图 3：在线考试与 PDF 导出 -->
+            <!-- 视图 3：在线考试 -->
             <section id="view-exam" class="hidden space-y-4">
                 <div class="bg-white p-4 rounded-xl border border-slate-200">
                     <h3 class="text-sm font-bold mb-3">当前可用试卷列表</h3>
@@ -94,19 +91,18 @@
                             <h2 id="paperTitle" class="text-xl font-bold">试卷标题</h2>
                             <p class="text-xs text-slate-500 mt-1" id="paperMeta">考生工号：-- | 姓名：--</p>
                         </div>
-                        <button onclick="exportPDF()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-emerald-700">导出PDF答卷</button>
+                        <button onclick="exportPDF()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold">导出PDF答卷</button>
                     </div>
                     <div id="paperQuestions" class="space-y-6"></div>
                 </div>
             </section>
 
-
-            <!-- 视图 4：管理员控制台（组卷 + 题库管理） -->
+            <!-- 视图 4：管理员控制台（题库 CRUD + 试卷组卷） -->
             <section id="view-admin" class="hidden space-y-4">
                 <!-- 管理员二级导航 -->
                 <div class="flex gap-4 border-b border-slate-200 pb-2">
                     <button onclick="switchAdminSubTab('manage')" id="adminTab-manage" class="font-bold text-sm text-amber-700 border-b-2 border-amber-600 pb-2">
-                        <i class="fa-solid fa-list-check mr-1"></i> 题库管理
+                        <i class="fa-solid fa-list-check mr-1"></i> 题库 CRUD 管理
                     </button>
                     <button onclick="switchAdminSubTab('build')" id="adminTab-build" class="font-medium text-sm text-slate-500 hover:text-amber-700 pb-2">
                         <i class="fa-solid fa-file-circle-plus mr-1"></i> 试卷组卷发布
@@ -138,24 +134,19 @@
                                 <option value="all">所有题型</option>
                                 <option value="填空题">填空题</option>
                                 <option value="选择题">选择题</option>
-                                <option value="判断题">判断题</option> <!-- 👈 支持判断题 -->
+                                <option value="判断题">判断题</option>
                                 <option value="简答题">简答题</option>
                             </select>
                         </div>
                         <input type="text" id="adminManageSearch" oninput="renderAdminManageList()" placeholder="搜索题目关键字..." class="w-full p-2 border rounded-md bg-white outline-none">
                     </div>
 
-                    <!-- 题目列表 -->
-                    <div id="adminManageList" class="space-y-2 max-h-[500px] overflow-y-auto">
-                        <!-- JS 动态渲染 -->
-                    </div>
+                    <div id="adminManageList" class="space-y-2 max-h-[500px] overflow-y-auto"></div>
                 </div>
 
-                <!-- 板块 2：试卷组卷发布 (保持之前的组卷界面结构) -->
+                <!-- 板块 2：试卷组卷发布 -->
                 <div id="adminSubView-build" class="hidden">
-                    <!-- 此处放置之前做好的“创建新试卷”双栏界面 -->
                     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                        <!-- 顶部标题与统计发布栏 -->
                         <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b pb-4">
                             <div>
                                 <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -163,7 +154,6 @@
                                 </h3>
                                 <p class="text-xs text-slate-400 mt-1">筛选题目并勾选，右侧可实时预览生成后的试卷效果</p>
                             </div>
-                            <!-- 统计与操作按钮 -->
                             <div class="flex items-center gap-3">
                                 <div class="bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg text-xs">
                                     已选 <strong id="adminSelectedCount" class="text-amber-700 text-sm">0</strong> 题
@@ -178,7 +168,6 @@
                             </div>
                         </div>
 
-                        <!-- 试卷标题与考试时间设置 -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div class="md:col-span-1">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">试卷标题 <span class="text-red-500">*</span></label>
@@ -194,9 +183,7 @@
                             </div>
                         </div>
 
-                        <!-- 组卷核心面板：左侧选题，右侧预览 -->
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
-                            <!-- 左侧：题目筛选与选择器 -->
                             <div id="adminSelectorCol" class="lg:col-span-7 space-y-3">
                                 <div class="text-xs font-bold text-slate-700 flex justify-between items-center">
                                     <span>选择题目</span>
@@ -207,7 +194,6 @@
                                     </div>
                                 </div>
 
-                                <!-- 多维筛选器 -->
                                 <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2 text-xs">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                                         <select id="adminSourceSelect" onchange="renderAdminSelect()" class="w-full p-2 border rounded-md bg-white text-slate-700">
@@ -220,1199 +206,102 @@
                                             <option value="all">所有题型</option>
                                             <option value="填空题">填空题</option>
                                             <option value="选择题">选择题</option>
+                                            <option value="判断题">判断题</option>
                                             <option value="简答题">简答题</option>
                                         </select>
                                     </div>
                                     <input type="text" id="adminSearchKw" oninput="renderAdminSelect()" placeholder="搜索题目关键字..." class="w-full p-2 border rounded-md bg-white outline-none">
                                 </div>
 
-                                <!-- 题目列表 -->
-                                <div id="adminQuestionSelect" class="max-h-[480px] overflow-y-auto border rounded-lg p-3 space-y-2 bg-white">
-                                    <!-- JS动态生成 -->
-                                </div>
+                                <div id="adminQuestionSelect" class="max-h-[480px] overflow-y-auto border rounded-lg p-3 space-y-2 bg-white"></div>
                             </div>
 
-                            <!-- 右侧：试卷实时预览 -->
                             <div id="adminPreviewCol" class="lg:col-span-5 border-t lg:border-t-0 lg:border-l border-slate-200 lg:pl-6 space-y-3">
                                 <div class="text-xs font-bold text-slate-700 flex justify-between items-center">
                                     <span>试卷卷面预览</span>
                                     <span class="text-slate-400 font-normal">点击右上角 ❌ 可踢出此题</span>
                                 </div>
-                                <div id="adminPreviewContainer" class="max-h-[520px] overflow-y-auto border border-amber-200/60 rounded-lg p-4 bg-amber-50/20 space-y-3">
-                                    <!-- JS动态生成预览 -->
-                                </div>
+                                <div id="adminPreviewContainer" class="max-h-[520px] overflow-y-auto border border-amber-200/60 rounded-lg p-4 bg-amber-50/20 space-y-3"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
+        </main>
+    </div>
 
-            <!-- 题目新增/编辑 弹窗 Modal -->
-            <div id="questionModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div class="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-                    <div class="flex justify-between items-center border-b pb-3">
-                        <h3 id="modalTitle" class="font-bold text-base text-slate-800">新增题目</h3>
-                        <button onclick="closeQuestionModal()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
+    <!-- 3. 题目新增/编辑 Modal 弹窗 -->
+    <div id="questionModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="modalTitle" class="font-bold text-base text-slate-800">新增题目</h3>
+                <button onclick="closeQuestionModal()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
+            </div>
+
+            <input type="hidden" id="editQId">
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1">所属试卷/模块</label>
+                    <input type="text" id="formSource" placeholder="例如：TCN相关考核" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">题目类型</label>
+                    <select id="formType" onchange="toggleFormOptions()" class="w-full p-2 border rounded-lg outline-none bg-white">
+                        <option value="填空题">填空题</option>
+                        <option value="选择题">选择题</option>
+                        <option value="判断题">判断题</option>
+                        <option value="简答题">简答题</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">题目描述</label>
+                    <textarea id="formQuestion" placeholder="输入题目内容..." class="w-full p-2 border rounded-lg outline-none h-20 focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+
+                <div id="formOptionsArea" class="hidden space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div class="flex justify-between items-center">
+                        <label class="block font-semibold text-slate-700">选择题选项</label>
+                        <button type="button" onclick="addOptionInputRow('')" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> 添加选项
+                        </button>
                     </div>
+                    <div id="formOptionsList" class="space-y-2"></div>
+                </div>
 
-                    <input type="hidden" id="editQId">
-
-                    <div class="space-y-3 text-xs">
-                        <div>
-                            <label class="block font-semibold mb-1">所属试卷/模块</label>
-                            <input type="text" id="formSource" placeholder="例如：TCN相关考核" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block font-semibold mb-1">题目类型</label>
-                            <select id="formType" onchange="toggleFormOptions()" class="w-full p-2 border rounded-lg outline-none bg-white">
-                                <option value="填空题">填空题</option>
-                                <option value="选择题">选择题</option>
-                                <option value="判断题">判断题</option> <!-- 👈 支持判断题 -->
-                                <option value="简答题">简答题</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-semibold mb-1">题目描述</label>
-                            <textarea id="formQuestion" placeholder="输入题目内容..." class="w-full p-2 border rounded-lg outline-none h-20 focus:ring-2 focus:ring-indigo-500"></textarea>
-                        </div>
-
-                        <!-- 👈 动态选择题选项列表（支持按钮新增、删除） -->
-                        <div id="formOptionsArea" class="hidden space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                            <div class="flex justify-between items-center">
-                                <label class="block font-semibold text-slate-700">选择题选项</label>
-                                <button type="button" onclick="addOptionInputRow('')" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold flex items-center gap-1">
-                                    <i class="fa-solid fa-plus"></i> 添加选项
-                                </button>
-                            </div>
-                            <div id="formOptionsList" class="space-y-2">
-                                <!-- JS 动态渲染选项输入框 -->
-                            </div>
-                        </div>
-
-                        <!-- 标准答案输入 + 判断题快捷按钮 -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="block font-semibold">标准答案</label>
-                                <div id="judgmentHelperArea" class="hidden gap-1.5">
-                                    <button type="button" onclick="setJudgmentAnswer('正确')" class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100">正确 (对)</button>
-                                    <button type="button" onclick="setJudgmentAnswer('错误')" class="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100">错误 (错)</button>
-                                </div>
-                            </div>
-                            <textarea id="formAnswer" placeholder="输入标准答案..." class="w-full p-2 border rounded-lg outline-none h-16 focus:ring-2 focus:ring-indigo-500"></textarea>
-                        </div>
-
-                        <!-- 题目图片上传 -->
-                        <div>
-                            <label class="block font-semibold mb-1">题目附图 (可选)</label>
-                            <input type="file" id="formImageFile" accept="image/*" class="w-full p-1 border rounded-lg text-xs">
-                            <div id="currentImagePreview" class="mt-2 hidden">
-                                <span class="text-[10px] text-slate-400 block mb-1">已有图片预览：</span>
-                                <img id="previewImgSrc" src="" class="h-24 rounded border object-contain bg-slate-50">
-                            </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block font-semibold">标准答案</label>
+                        <div id="judgmentHelperArea" class="hidden gap-1.5">
+                            <button type="button" onclick="setJudgmentAnswer('正确')" class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100">正确 (对)</button>
+                            <button type="button" onclick="setJudgmentAnswer('错误')" class="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100">错误 (错)</button>
                         </div>
                     </div>
+                    <textarea id="formAnswer" placeholder="输入标准答案..." class="w-full p-2 border rounded-lg outline-none h-16 focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
 
-                    <div class="flex justify-end gap-2 pt-3 border-t">
-                        <button onclick="closeQuestionModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600">取消</button>
-                        <button onclick="saveQuestionSubmit()" id="btnSaveQ" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white">保存题目</button>
+                <div>
+                    <label class="block font-semibold mb-1">题目附图 (可选)</label>
+                    <input type="file" id="formImageFile" accept="image/*" class="w-full p-1 border rounded-lg text-xs">
+                    <div id="currentImagePreview" class="mt-2 hidden">
+                        <span class="text-[10px] text-slate-400 block mb-1">已有图片预览：</span>
+                        <img id="previewImgSrc" src="" class="h-24 rounded border object-contain bg-slate-50">
                     </div>
                 </div>
             </div>
 
-            <!-- 视图 4：管理员自由组卷（已升级：筛选 + 统计 + 实时预览） -->
-
-
-        </main>
+            <div class="flex justify-end gap-2 pt-3 border-t">
+                <button onclick="closeQuestionModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600">取消</button>
+                <button onclick="saveQuestionSubmit()" id="btnSaveQ" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white">保存题目</button>
+            </div>
+        </div>
     </div>
 
-    <script>
-    // 1. 显式在 window 全局挂载变量，确保所有函数都能访问
-    window.db = null;
-    window.currentUser = null;
-    window.allQuestions = [];
-    window.reviewMode = 'recite';
-
-    // 2. 初始化 Supabase 数据库
-    async function initSystem() {
-        try {
-            const response = await fetch('/api/config');
-            if (!response.ok) {
-                throw new Error(`配置接口响应异常: ${response.status}`);
-            }
-            const config = await response.json();
-
-            // 赋值给全局 window.db
-            window.db = supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
-            console.log("✅ Supabase 初始化成功");
-        } catch (error) {
-            console.error("❌ 初始化失败:", error);
-            alert("系统配置加载失败，请检查 Cloudflare 环境变量或网络配置！");
-        }
-    }
-
-    // 页面 DOM 加载完成后运行初始化
-    window.addEventListener('DOMContentLoaded', initSystem);
-
-    // 3. 登录处理逻辑
-    async function handleLogin() {
-        if (!window.db) {
-            return alert('系统数据库正在连接中，请稍等 1~2 秒后重试登录...');
-        }
-
-        const empId = document.getElementById('empIdInput').value.trim();
-        if (!empId) return alert('请输入工号');
-
-        // 1. 立即给按钮增加 Loading 效果（极大消除等待时的卡顿感）
-        const loginBtn = document.getElementById('loginBtn');
-        loginBtn.disabled = true;
-        loginBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> 登录验证中...`;
-
-        try {
-            const { data, error } = await window.db
-                .from('users')
-                .select('*')
-                .eq('emp_id', empId)
-                .single();
-
-            if (error || !data) {
-                alert('工号不存在，请联系管理员！');
-                // 恢复按钮状态
-                loginBtn.disabled = false;
-                loginBtn.innerText = '登录平台';
-                return;
-            }
-
-            window.currentUser = data;
-            document.getElementById('userInfo').innerText = currentUser.name;
-            document.getElementById('loginView').classList.add('hidden');
-            document.getElementById('mainView').classList.remove('hidden');
-
-            // 2. 严格权限控制：如果是 admin 显式移除 hidden，如果是普通员工强制添加 hidden
-            const adminTab = document.getElementById('tab-admin');
-            if (currentUser.role === 'admin') {
-                adminTab.classList.remove('hidden');
-            } else {
-                adminTab.classList.add('hidden');
-            }
-
-            await loadQuestions();
-        } catch (err) {
-            console.error("登录异常:", err);
-            alert("登录过程发生错误，请查看控制台。");
-            // 恢复按钮状态
-            loginBtn.disabled = false;
-            loginBtn.innerText = '登录平台';
-        }
-    }
-
-    // 显式挂载 handleLogin 到 window，避免 HTML 中的 onclick 找不到函数
-    window.handleLogin = handleLogin;
-
-        function logout() { location.reload(); }
-
-        // 加载题库
-        async function loadQuestions() {
-            const { data } = await db.from('questions').select('*');
-            allQuestions = data || [];
-            renderReviewQuestions();
-            renderAdminSelect();
-            loadExamList();
-        }
-
-        // Tab 切换逻辑（修复普通员工隐藏管理Tab失效问题）
-        function switchTab(tab) {
-            // 权限防御：普通员工拦截访问 admin 视图
-            if (tab === 'admin' && (!window.currentUser || window.currentUser.role !== 'admin')) {
-                return;
-            }
-
-            const tabs = ['review', 'quiz', 'exam', 'admin'];
-
-            tabs.forEach(t => {
-                const viewEl = document.getElementById(`view-${t}`);
-                const btnEl = document.getElementById(`tab-${t}`);
-
-                // 隐藏所有视图内容
-                if (viewEl) viewEl.classList.add('hidden');
-
-                // 重置按钮样式，避免直接覆盖 className 导致 hidden 被冲掉
-                if (btnEl) {
-                    btnEl.classList.remove('border-b-2', 'border-indigo-600', 'border-amber-600', 'text-indigo-600', 'font-bold');
-                    
-                    // 如果是非管理员，强制保持 hidden；如果是管理员则确保可见
-                    if (t === 'admin') {
-                        if (!window.currentUser || window.currentUser.role !== 'admin') {
-                            btnEl.classList.add('hidden');
-                        } else {
-                            btnEl.classList.remove('hidden');
-                        }
-                    } else {
-                        btnEl.classList.add('text-slate-500');
-                    }
-                }
-            });
-
-            // 显示当前选中的视图
-            const activeView = document.getElementById(`view-${tab}`);
-            if (activeView) activeView.classList.remove('hidden');
-
-            // 激活当前选中的按钮样式
-            const activeBtn = document.getElementById(`tab-${tab}`);
-            if (activeBtn) {
-                activeBtn.classList.remove('text-slate-500');
-                if (tab === 'admin') {
-                    activeBtn.classList.add('border-b-2', 'border-amber-600', 'text-amber-600', 'font-bold');
-                } else {
-                    activeBtn.classList.add('border-b-2', 'border-indigo-600', 'text-indigo-600', 'font-bold');
-                }
-            }
-        }
-
-        // 视图 1：背题/刷题渲染
-        // 切换背题/刷题模式
-        function setReviewMode(m) { 
-            window.reviewMode = m; 
-
-            // 更新按钮高亮样式
-            const btnRecite = document.getElementById('btnRecite');
-            const btnQuiz = document.getElementById('btnQuiz');
-            if (btnRecite && btnQuiz) {
-                btnRecite.className = m === 'recite' 
-                    ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white' 
-                    : 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600';
-                btnQuiz.className = m === 'self' 
-                    ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white' 
-                    : 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600';
-            }
-
-            renderReviewQuestions(); 
-        }
-
-        // 渲染题库复习列表
-        function renderReviewQuestions() {
-            const searchInput = document.getElementById('reviewSearch');
-            const kw = (searchInput ? searchInput.value : '').toLowerCase().trim();
-            const container = document.getElementById('reviewContainer');
-
-            if (!container) return;
-
-            const list = (window.allQuestions || []).filter(q => 
-                (q.question || '').toLowerCase().includes(kw) || 
-                (q.answer || '').toLowerCase().includes(kw)
-            );
-
-            if (list.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">没有找到符合条件的题目</div>`;
-                return;
-            }
-
-            container.innerHTML = list.map((q, idx) => `
-                    <div class="bg-white p-4 rounded-xl border border-slate-200">
-                        <div class="text-xs text-indigo-600 font-semibold mb-1">[${q.source}] ${q.type}</div>
-                        <div class="font-medium text-sm text-slate-800">${idx+1}. ${q.question}</div>
-                        
-                        <!-- 👈 在此处插入：如果题目有图片则显示 -->
-                        ${q.image_url ? `<div class="my-2"><img src="${q.image_url}" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50"></div>` : ''}
-
-                        ${window.reviewMode === 'recite' ?  
-                            `<div class="mt-2 p-2 bg-amber-50 text-amber-900 rounded text-xs border border-amber-200 font-medium">标答：${q.answer}</div>` : 
-                            `<details class="mt-2 text-xs text-slate-400"><summary class="cursor-pointer text-indigo-600">点击查看答案</summary><div class="mt-1 text-slate-700 whitespace-pre-line">${q.answer}</div></details>`}
-                    </div>
-                `).join('');
-        }
-
-        // 视图 2：随机自测
-        function generateRandomQuiz() {
-            const shuffled = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, 10);
-            const container = document.getElementById('quizContainer');
-            
-            container.innerHTML = shuffled.map((q, idx) => `
-                <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
-                    <div class="font-medium text-sm">${idx+1}. ${q.question}</div>
-                    
-                    <!-- 👈 在此处插入：如果题目有图片则显示 -->
-                    ${q.image_url ? `<div class="my-2"><img src="${q.image_url}" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50"></div>` : ''}
-
-                    <textarea placeholder="在此填写你的答案..." class="w-full border p-2.5 rounded-xl text-xs h-20 outline-none"></textarea>
-                    <details class="text-xs text-slate-400">
-                        <summary class="cursor-pointer text-indigo-600">对照标准答案</summary>
-                        <div class="mt-1 text-emerald-700 font-medium whitespace-pre-line">${q.answer}</div>
-                    </details>
-                </div>
-            `).join('');
-        }
-
-
-        // 获取当前试卷草稿的唯一 Key (按工号与试卷名隔离)
-        function getDraftKey(examTitle) {
-            return `exam_draft_${currentUser ? currentUser.emp_id : 'guest'}_${examTitle}`;
-        }
-
-        // 自动保存答题草稿 (完美兼容单选框 Radio、复选框 Checkbox 与文本框)
-        function saveExamDraft(examTitle) {
-            if (!currentUser) return;
-            const key = getDraftKey(examTitle);
-            const draft = {};
-
-            const inputs = document.querySelectorAll('.exam-input');
-            inputs.forEach(input => {
-                const name = input.name;
-                if (!name) return;
-
-                if (input.type === 'checkbox') {
-                    if (!draft[name]) draft[name] = [];
-                    if (input.checked) draft[name].push(input.value);
-                } else if (input.type === 'radio') {
-                    if (input.checked) draft[name] = input.value; // 👈 记录单选框的值
-                } else {
-                    draft[name] = input.value;
-                }
-            });
-
-            localStorage.setItem(key, JSON.stringify(draft));
-        }
-
-        // 自动还原答题草稿
-        function restoreExamDraft(examTitle) {
-            if (!currentUser) return;
-            const key = getDraftKey(examTitle);
-            const saved = localStorage.getItem(key);
-            if (!saved) return;
-
-            try {
-                const draft = JSON.parse(saved);
-                Object.keys(draft).forEach(name => {
-                    const val = draft[name];
-                    if (Array.isArray(val)) {
-                        // 还原复选框
-                        val.forEach(optVal => {
-                            const cb = document.querySelector(`input[name="${name}"][value="${CSS.escape(optVal)}"]`);
-                            if (cb) cb.checked = true;
-                        });
-                    } else {
-                        // 还原单选框 (判断题)
-                        const radio = document.querySelector(`input[name="${name}"][value="${CSS.escape(val)}"]`);
-                        if (radio && radio.type === 'radio') {
-                            radio.checked = true;
-                        } else {
-                            // 还原文本框
-                            const textEl = document.querySelector(`[name="${name}"]`);
-                            if (textEl) textEl.value = val;
-                        }
-                    }
-                });
-            } catch (e) {
-                console.error("还原草稿失败:", e);
-            }
-        }
-
-        // ==================== 题库 CRUD 与图片上传 ====================
-        // 切换管理二级 Tab (管理列表 vs 试卷组卷)
-        function switchAdminSubTab(subTab) {
-            const manageView = document.getElementById('adminSubView-manage');
-            const buildView = document.getElementById('adminSubView-build');
-            const manageBtn = document.getElementById('adminTab-manage');
-            const buildBtn = document.getElementById('adminTab-build');
-
-            if (subTab === 'manage') {
-                manageView.classList.remove('hidden');
-                buildView.classList.add('hidden');
-                manageBtn.className = "font-bold text-sm text-amber-700 border-b-2 border-amber-600 pb-2";
-                buildBtn.className = "font-medium text-sm text-slate-500 hover:text-amber-700 pb-2";
-                renderAdminManageList();
-            } else {
-                manageView.classList.add('hidden');
-                buildView.classList.remove('hidden');
-                buildBtn.className = "font-bold text-sm text-amber-700 border-b-2 border-amber-600 pb-2";
-                manageBtn.className = "font-medium text-sm text-slate-500 hover:text-amber-700 pb-2";
-                renderAdminSelect();
-            }
-        }
-
-        // 渲染管理端题目列表
-        function renderAdminManageList() {
-            const source = document.getElementById('adminManageSourceSelect')?.value || 'all';
-            const type = document.getElementById('adminManageTypeSelect')?.value || 'all';
-            const kw = (document.getElementById('adminManageSearch')?.value || '').toLowerCase().trim();
-            const container = document.getElementById('adminManageList');
-            if (!container) return;
-
-            const list = (window.allQuestions || []).filter(q => {
-                const matchSrc = source === 'all' || q.source === source;
-                const matchType = type === 'all' || q.type === type;
-                const matchKw = !kw || (q.question || '').toLowerCase().includes(kw) || (q.answer || '').toLowerCase().includes(kw);
-                return matchSrc && matchType && matchKw;
-            });
-
-            if (list.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">没有找到相关题目</div>`;
-                return;
-            }
-
-            container.innerHTML = list.map(q => `
-                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex justify-between items-start gap-4 hover:border-indigo-200 transition">
-                    <div class="space-y-1 flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${getTypeBadgeClass(q.type)}">${q.type}</span>
-                            <span class="text-xs text-slate-400 truncate">[${q.source}]</span>
-                            ${q.image_url ? '<span class="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-semibold"><i class="fa-solid fa-image"></i> 含图片</span>' : ''}
-                        </div>
-                        <div class="font-medium text-xs text-slate-800 break-all leading-snug">${q.question}</div>
-                    </div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <button onclick="openQuestionModal(${q.id})" class="text-xs px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-medium">编辑</button>
-                        <button onclick="deleteQuestion(${q.id})" class="text-xs px-2.5 py-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 font-medium">删除</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // 3. 动态增删选择题选项输入行逻辑
-        function renderOptionInputs(optionsArray = []) {
-            const listContainer = document.getElementById('formOptionsList');
-            if (!listContainer) return;
-
-            // 默认提供 4 个空选项 (A, B, C, D)
-            const opts = optionsArray.length > 0 ? optionsArray : ['', '', '', ''];
-            listContainer.innerHTML = '';
-            
-            opts.forEach(optVal => addOptionInputRow(optVal));
-        }
-
-        function addOptionInputRow(val = '') {
-            const listContainer = document.getElementById('formOptionsList');
-            if (!listContainer) return;
-
-            // 剥离传入的 "A. " 前缀以供干净输入
-            const cleanVal = val.replace(/^[A-Z]\.\s*/, '');
-
-            const div = document.createElement('div');
-            div.className = 'flex items-center gap-2 option-row';
-            div.innerHTML = `
-                <span class="option-prefix font-bold text-slate-400 text-xs w-4"></span>
-                <input type="text" value="${cleanVal.replace(/"/g, '&quot;')}" placeholder="输入选项内容..." class="option-input flex-1 p-2 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                <button type="button" onclick="removeOptionInputRow(this)" class="text-rose-400 hover:text-rose-600 text-xs p-1" title="删除该选项">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            `;
-            listContainer.appendChild(div);
-            updateOptionPrefixes();
-        }
-
-        function removeOptionInputRow(btn) {
-            const row = btn.closest('.option-row');
-            if (row) {
-                row.remove();
-                updateOptionPrefixes();
-            }
-        }
-
-        function updateOptionPrefixes() {
-            const rows = document.querySelectorAll('#formOptionsList .option-row');
-            rows.forEach((row, idx) => {
-                const prefixSpan = row.querySelector('.option-prefix');
-                if (prefixSpan) prefixSpan.innerText = `${String.fromCharCode(65 + idx)}.`;
-            });
-        }
-
-        function getCollectedOptionValues() {
-            const rows = document.querySelectorAll('#formOptionsList .option-row');
-            const result = [];
-            rows.forEach((row, idx) => {
-                const input = row.querySelector('.option-input');
-                const val = input ? input.value.trim() : '';
-                if (val) {
-                    result.push(`${String.fromCharCode(65 + idx)}. ${val}`);
-                }
-            });
-            return result;
-        }
-
-        // 判断题设置助手
-        function setJudgmentAnswer(val) {
-            document.getElementById('formAnswer').value = val;
-        }
-
-        function toggleFormOptions() {
-            const type = document.getElementById('formType').value;
-            const optArea = document.getElementById('formOptionsArea');
-            const judgmentHelper = document.getElementById('judgmentHelperArea');
-
-            if (type === '选择题') {
-                optArea.classList.remove('hidden');
-            } else {
-                optArea.classList.add('hidden');
-            }
-
-            if (type === '判断题') {
-                judgmentHelper.classList.remove('hidden');
-                judgmentHelper.classList.add('flex');
-            } else {
-                judgmentHelper.classList.add('hidden');
-                judgmentHelper.classList.remove('flex');
-            }
-        }
-
-        // 4. 打开弹窗时初始化选项列表
-        function openQuestionModal(qId = null) {
-            const modal = document.getElementById('questionModal');
-            modal.classList.remove('hidden');
-
-            document.getElementById('editQId').value = qId || '';
-            document.getElementById('modalTitle').innerText = qId ? '编辑题目' : '新增题目';
-            document.getElementById('formImageFile').value = '';
-
-            if (qId) {
-                const q = window.allQuestions.find(item => item.id === qId);
-                if (q) {
-                    document.getElementById('formSource').value = q.source || '';
-                    document.getElementById('formType').value = q.type || '填空题';
-                    document.getElementById('formQuestion').value = q.question || '';
-                    document.getElementById('formAnswer').value = q.answer || '';
-                    
-                    renderOptionInputs(Array.isArray(q.options) ? q.options : []);
-
-                    if (q.image_url) {
-                        document.getElementById('currentImagePreview').classList.remove('hidden');
-                        document.getElementById('previewImgSrc').src = q.image_url;
-                    } else {
-                        document.getElementById('currentImagePreview').classList.add('hidden');
-                    }
-                }
-            } else {
-                document.getElementById('formSource').value = '';
-                document.getElementById('formType').value = '填空题';
-                document.getElementById('formQuestion').value = '';
-                document.getElementById('formAnswer').value = '';
-                renderOptionInputs([]); // 默认初始化 4 个空白选项
-                document.getElementById('currentImagePreview').classList.add('hidden');
-            }
-
-            toggleFormOptions();
-        }
-
-
-        // 打开新增/编辑弹窗
-        function openQuestionModal(qId = null) {
-            const modal = document.getElementById('questionModal');
-            modal.classList.remove('hidden');
-
-            document.getElementById('editQId').value = qId || '';
-            document.getElementById('modalTitle').innerText = qId ? '编辑题目' : '新增题目';
-            document.getElementById('formImageFile').value = '';
-
-            if (qId) {
-                const q = window.allQuestions.find(item => item.id === qId);
-                if (q) {
-                    document.getElementById('formSource').value = q.source || '';
-                    document.getElementById('formType').value = q.type || '填空题';
-                    document.getElementById('formQuestion').value = q.question || '';
-                    document.getElementById('formAnswer').value = q.answer || '';
-                    document.getElementById('formOptions').value = Array.isArray(q.options) ? q.options.join('\n') : '';
-
-                    if (q.image_url) {
-                        document.getElementById('currentImagePreview').classList.remove('hidden');
-                        document.getElementById('previewImgSrc').src = q.image_url;
-                    } else {
-                        document.getElementById('currentImagePreview').classList.add('hidden');
-                    }
-                }
-            } else {
-                document.getElementById('formSource').value = '';
-                document.getElementById('formType').value = '填空题';
-                document.getElementById('formQuestion').value = '';
-                document.getElementById('formAnswer').value = '';
-                document.getElementById('formOptions').value = '';
-                document.getElementById('currentImagePreview').classList.add('hidden');
-            }
-
-            toggleFormOptions();
-        }
-
-        function closeQuestionModal() {
-            document.getElementById('questionModal').classList.add('hidden');
-        }
-
-        function toggleFormOptions() {
-            const type = document.getElementById('formType').value;
-            const optArea = document.getElementById('formOptionsArea');
-            if (type === '选择题') {
-                optArea.classList.remove('hidden');
-            } else {
-                optArea.classList.add('hidden');
-            }
-        }
-
-        // 图片上传辅助函数
-        async function uploadImageToStorage(file) {
-            if (!file) return null;
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-            const filePath = `questions/${fileName}`;
-
-            // 使用 Supabase JS SDK 上传文件到 question-images Bucket
-            const { data, error } = await window.db.storage
-                .from('question-images')
-                .upload(filePath, file);
-
-            if (error) throw error;
-
-            // 获取公开访问链接
-            const { data: publicUrlData } = window.db.storage
-                .from('question-images')
-                .getPublicUrl(filePath);
-
-            return publicUrlData.publicUrl;
-        }
-
-        // 提交保存 (新增或更新)
-        async function saveQuestionSubmit() {
-            const qId = document.getElementById('editQId').value;
-            const source = document.getElementById('formSource').value.trim();
-            const type = document.getElementById('formType').value;
-            const question = document.getElementById('formQuestion').value.trim();
-            const answer = document.getElementById('formAnswer').value.trim();
-            const imageFile = document.getElementById('formImageFile').files[0];
-
-            if (!source || !question || !answer) {
-                return alert('请填写完整的内容（所属模块、题目描述、标准答案）！');
-            }
-
-            // 从动态选项行收集选项
-            const options = type === '选择题' ? getCollectedOptionValues() : [];
-
-            if (type === '选择题' && options.length === 0) {
-                return alert('选择题请至少填写一个有效选项！');
-            }
-
-            const saveBtn = document.getElementById('btnSaveQ');
-            saveBtn.disabled = true;
-            saveBtn.innerText = '正在保存...';
-
-            try {
-                let imageUrl = null;
-                if (imageFile) {
-                    imageUrl = await uploadImageToStorage(imageFile);
-                } else if (qId) {
-                    const existingQ = window.allQuestions.find(item => item.id === parseInt(qId));
-                    if (existingQ) imageUrl = existingQ.image_url;
-                }
-
-                const payload = { source, type, question, answer, options, image_url: imageUrl };
-
-                if (qId) {
-                    const { error } = await window.db.from('questions').update(payload).eq('id', parseInt(qId));
-                    if (error) throw error;
-                } else {
-                    const { error } = await window.db.from('questions').insert([payload]);
-                    if (error) throw error;
-                }
-
-                alert('🎉 题目保存成功！');
-                closeQuestionModal();
-                await loadQuestions();
-                renderAdminManageList();
-            } catch (err) {
-                console.error("保存失败:", err);
-                alert("保存题目失败：" + err.message);
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.innerText = '保存题目';
-            }
-        }
-
-        // 删除题目
-        async function deleteQuestion(qId) {
-            if (!confirm('确定要彻底删除这道题目吗？')) return;
-
-            try {
-                const { error } = await window.db.from('questions').delete().eq('id', qId);
-                if (error) throw error;
-
-                alert('🗑️ 题目已成功删除！');
-                await loadQuestions();
-                renderAdminManageList();
-            } catch (err) {
-                alert("删除题目失败：" + err.message);
-            }
-        }
-
-        // 加载试卷列表（已到期试卷仍保持可见，供员工查看/导出）
-        async function loadExamList() {
-            try {
-                const { data, error } = await window.db.from('exams').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
-
-                const container = document.getElementById('examList');
-                if (!container) return;
-
-                const isAdmin = window.currentUser && window.currentUser.role === 'admin';
-                const now = new Date();
-
-                // 过滤规则：普通员工只能看到已经到了开始时间的试卷（含已截止的，用于查看/导出）
-                const displayList = (data || []).filter(e => {
-                    if (isAdmin) return true;
-                    return now >= new Date(e.start_time);
-                });
-
-                if (displayList.length === 0) {
-                    container.innerHTML = `
-                        <div class="col-span-2 text-center py-8 text-slate-400 text-xs">
-                            <i class="fa-solid fa-clock-rotate-left text-2xl mb-2 text-slate-300"></i>
-                            <p>${isAdmin ? '暂无试卷，请在“管理组卷”中发布新试卷' : '当前暂无公开的考试试卷'}</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = displayList.map(e => {
-                    const start = new Date(e.start_time);
-                    const end = new Date(e.end_time);
-
-                    let statusBadge = '';
-                    let btnText = '进入答题';
-                    let btnClass = 'bg-indigo-600 hover:bg-indigo-700 text-white';
-
-                    if (now < start) {
-                        statusBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">未开始</span>`;
-                        btnText = '未到开始时间';
-                        btnClass = 'bg-slate-200 text-slate-400 cursor-not-allowed';
-                    } else if (now >= start && now <= end) {
-                        statusBadge = `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">进行中</span>`;
-                    } else {
-                        statusBadge = `<span class="bg-slate-200 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">已截止</span>`;
-                        btnText = '查看 / 导出答卷';
-                        btnClass = 'bg-slate-700 hover:bg-slate-800 text-white';
-                    }
-
-                    const adminActionBtns = isAdmin ? `
-                        <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
-                            <button onclick="deleteExam(${e.id}, '${e.title}')" class="w-full text-xs py-1 rounded bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition font-medium">
-                                <i class="fa-solid fa-trash-can"></i> 删除试卷
-                            </button>
-                        </div>
-                    ` : '';
-
-                    const timeFormat = (d) => `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-
-                    return `
-                        <div class="border border-slate-200 p-4 rounded-xl bg-slate-50/50 shadow-sm flex flex-col justify-between gap-3">
-                            <div>
-                                <div class="flex items-center justify-between gap-2 mb-1">
-                                    <span class="font-bold text-sm text-slate-800 break-all">${e.title}</span>
-                                    ${statusBadge}
-                                </div>
-                                <div class="text-xs text-slate-500 space-y-0.5 mt-2">
-                                    <div><i class="fa-regular fa-clock"></i> 时间：${timeFormat(start)} ~ ${timeFormat(end)}</div>
-                                    <div><i class="fa-solid fa-list-ol"></i> 题量：${e.question_ids ? e.question_ids.length : 0} 题</div>
-                                </div>
-                            </div>
-                            <div class="flex flex-col gap-2">
-                                <button ${now < start ? 'disabled' : ''} onclick="startExam('${e.title}', ${JSON.stringify(e.question_ids)}, '${e.start_time}', '${e.end_time}')" class="w-full py-1.5 rounded-lg text-xs font-semibold transition ${btnClass}">
-                                    ${btnText}
-                                </button>
-                                ${adminActionBtns}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } catch (err) {
-                console.error("加载试卷列表失败:", err);
-            }
-        }
-
-        // 管理员：切换试卷显示/隐藏状态
-        async function toggleExamVisibility(examId, currentStatus) {
-            try {
-                const { error } = await window.db.from('exams').update({ is_visible: !currentStatus }).eq('id', examId);
-                if (error) throw error;
-                await loadExamList();
-            } catch (err) {
-                alert("修改试卷显示状态失败: " + err.message);
-            }
-        }
-
-        // 管理员：删除已发布试卷
-        async function deleteExam(examId, title) {
-            if (!confirm(`确定要删除试卷《${title}》吗？此操作不可撤销！`)) return;
-
-            try {
-                const { error } = await window.db.from('exams').delete().eq('id', examId);
-                if (error) throw error;
-                alert("🗑️ 试卷已成功删除！");
-                await loadExamList();
-            } catch (err) {
-                alert("删除试卷失败: " + err.message);
-            }
-        }
-
-        // 开始答题（集成选择题、判断题、填空题、简答题多控件渲染与锁定逻辑）
-        function startExam(title, qIds, startTimeStr, endTimeStr) {
-            const paperArea = document.getElementById('paperArea');
-            if (!paperArea) return;
-
-            paperArea.classList.remove('hidden');
-            document.getElementById('paperTitle').innerText = title;
-            document.getElementById('paperMeta').innerText = `考生工号：${currentUser.emp_id} | 姓名：${currentUser.name} | 日期：${new Date().toLocaleDateString()}`;
-
-            if (window.examTimerInterval) clearInterval(window.examTimerInterval);
-            window.hasAlertedTimeUp = false;
-
-            const examQs = (window.allQuestions || []).filter(q => qIds.includes(q.id));
-
-            document.getElementById('paperQuestions').innerHTML = `
-                <!-- 吸顶提示栏 -->
-                <div id="examTimerBar" class="bg-indigo-50 border border-indigo-200 p-3.5 rounded-xl flex justify-between items-center text-xs sticky top-[100px] z-30 shadow-sm transition">
-                    <span class="font-bold text-indigo-900 flex items-center gap-2">
-                        <i class="fa-solid fa-stopwatch text-base text-indigo-600"></i>
-                        <span id="examTimerLabel">剩余答题时间：</span>
-                    </span>
-                    <span id="examCountdownText" class="text-base font-black text-indigo-700 font-mono">00:00:00</span>
-                </div>
-
-                <!-- 试卷问题列表 -->
-                <div id="examQuestionsContainer" class="space-y-6 pt-2">
-                    ${examQs.map((q, idx) => {
-                        let interactiveHtml = '';
-
-                        // 1. 选择题控件 (复选/多选)
-                        if (q.type === '选择题' && Array.isArray(q.options) && q.options.length > 0) {
-                            interactiveHtml = `
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 my-2.5">
-                                    ${q.options.map((opt) => `
-                                        <label class="flex items-start gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/60 transition">
-                                            <input type="checkbox" name="q_${q.id}" value="${opt}" class="exam-input mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
-                                            <span class="text-xs text-slate-700 leading-snug">${opt}</span>
-                                        </label>
-                                    `).join('')}
-                                </div>
-                            `;
-                        } 
-                        // 2. 判断题控件 (新增：单选 Radio，仅能在“正确”与“错误”中二选一)
-                        else if (q.type === '判断题') {
-                            interactiveHtml = `
-                                <div class="flex gap-4 my-2.5">
-                                    <label class="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/60 transition flex-1">
-                                        <input type="radio" name="q_${q.id}" value="正确" class="exam-input text-indigo-600 focus:ring-indigo-500">
-                                        <span class="text-xs text-slate-700 font-semibold">正确 (对)</span>
-                                    </label>
-                                    <label class="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/60 transition flex-1">
-                                        <input type="radio" name="q_${q.id}" value="错误" class="exam-input text-indigo-600 focus:ring-indigo-500">
-                                        <span class="text-xs text-slate-700 font-semibold">错误 (错)</span>
-                                    </label>
-                                </div>
-                            `;
-                        } 
-                        // 3. 填空题控件 (单行输入框)
-                        else if (q.type === '填空题') {
-                            interactiveHtml = `
-                                <div class="mt-2">
-                                    <input type="text" name="q_${q.id}" placeholder="请在此输入填空答案..." class="exam-input w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                                </div>
-                            `;
-                        } 
-                        // 4. 简答题控件 (多行大文本框)
-                        else {
-                            interactiveHtml = `
-                                <div class="mt-2">
-                                    <textarea name="q_${q.id}" placeholder="请在此输入简答题回答..." class="exam-input w-full border border-slate-200 p-2.5 rounded-xl text-xs h-28 focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed transition"></textarea>
-                                </div>
-                            `;
-                        }
-
-                        return `
-                            <div class="space-y-2 border-b border-slate-100 pb-5">
-                                <div class="font-medium text-sm text-slate-800 leading-snug">
-                                    <span class="text-indigo-600 font-bold">#${idx + 1} [${q.type}]</span>${q.question}
-                                </div>
-
-                                <!-- 题目附图 (若有图片自动渲染) -->
-                                ${q.image_url ? `<div class="my-2"><img src="${q.image_url}" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50"></div>` : ''}
-
-                                <!-- 题型交互控件 -->
-                                ${interactiveHtml}
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-
-            // 1. 从 localStorage 还原防刷新草稿
-            restoreExamDraft(title);
-
-            // 2. 绑定输入/单选/复选框自动实时保存草稿
-            document.querySelectorAll('.exam-input').forEach(input => {
-                input.addEventListener('input', () => saveExamDraft(title));
-                input.addEventListener('change', () => saveExamDraft(title));
-            });
-
-            // 倒计时辅助函数
-            const formatMs = (ms) => {
-                const totalSec = Math.max(0, Math.floor(ms / 1000));
-                const h = String(Math.floor(totalSec / 3600)).padStart(2, '0');
-                const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
-                const s = String(totalSec % 60).padStart(2, '0');
-                return `${h}:${m}:${s}`;
-            };
-
-            // 锁死作答区域辅助函数
-            const setExamLocked = (isLocked) => {
-                const inputs = document.querySelectorAll('.exam-input');
-                const container = document.getElementById('examQuestionsContainer');
-                inputs.forEach(i => i.disabled = isLocked);
-                if (container) {
-                    container.style.pointerEvents = isLocked ? 'none' : 'auto';
-                    container.style.opacity = isLocked ? '0.85' : '1';
-                }
-            };
-
-            const startTime = new Date(startTimeStr).getTime();
-            const endTime = new Date(endTimeStr).getTime();
-
-            // 实时更新倒计时状态
-            const updateTimer = () => {
-                const now = Date.now();
-                const timerBar = document.getElementById('examTimerBar');
-                const timerLabel = document.getElementById('examTimerLabel');
-                const countdownText = document.getElementById('examCountdownText');
-
-                if (!timerBar || !countdownText) return;
-
-                // 考试进行中
-                if (now >= startTime && now <= endTime) {
-                    timerLabel.innerText = "剩余答题时间：";
-                    countdownText.innerText = formatMs(endTime - now);
-                    timerBar.className = "bg-indigo-50 border border-indigo-200 p-3.5 rounded-xl flex justify-between items-center text-xs sticky top-[100px] z-30 shadow-sm transition";
-                    countdownText.className = "text-base font-black text-indigo-700 font-mono";
-                    setExamLocked(false);
-                } 
-                // 考试已截止（只读/查看/导出模式）
-                else if (now > endTime) {
-                    timerLabel.innerText = "⚠️ 考试已截止（只读与导出模式）：";
-                    countdownText.innerText = "00:00:00";
-                    timerBar.className = "bg-amber-50 border border-amber-300 p-3.5 rounded-xl flex justify-between items-center text-xs sticky top-[100px] z-30 shadow-sm transition";
-                    countdownText.className = "text-base font-black text-amber-700 font-mono";
-                    
-                    setExamLocked(true); // 锁定作答区域
-
-                    if (!window.hasAlertedTimeUp) {
-                        window.hasAlertedTimeUp = true;
-                        alert('⏰ 本场考试已结束！作答区域已锁定。您可以查看内容并点击右上角【导出PDF答卷】保存记录。');
-                    }
-                    clearInterval(window.examTimerInterval);
-                }
-            };
-
-            updateTimer();
-            window.examTimerInterval = setInterval(updateTimer, 1000);
-            paperArea.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function exportPDF() {
-            const element = document.getElementById('paperArea');
-            html2pdf().set({ margin: 10, filename: `考试答卷_${currentUser.name}.pdf` }).from(element).save();
-        }
-
-        // ==================== 管理组卷增强逻辑 ====================
-        window.selectedExamQIds = new Set();
-        let isAdminPreviewOpen = true;
-
-        // 切换预览栏显示/隐藏
-        function toggleAdminPreview() {
-            const previewCol = document.getElementById('adminPreviewCol');
-            const selectorCol = document.getElementById('adminSelectorCol');
-            const btnText = document.getElementById('btnPreviewText');
-
-            isAdminPreviewOpen = !isAdminPreviewOpen;
-            if (isAdminPreviewOpen) {
-                previewCol.classList.remove('hidden');
-                selectorCol.className = "lg:col-span-7 space-y-3";
-                btnText.innerText = "隐藏预览";
-            } else {
-                previewCol.classList.add('hidden');
-                selectorCol.className = "lg:col-span-12 space-y-3";
-                btnText.innerText = "显示预览";
-            }
-        }
-
-        // 渲染选题列表（带筛选）
-        function renderAdminSelect() {
-            const source = document.getElementById('adminSourceSelect')?.value || 'all';
-            const type = document.getElementById('adminTypeSelect')?.value || 'all';
-            const kw = (document.getElementById('adminSearchKw')?.value || '').toLowerCase().trim();
-
-            const container = document.getElementById('adminQuestionSelect');
-            if (!container) return;
-
-            const filtered = (window.allQuestions || []).filter(q => {
-                const matchSrc = source === 'all' || q.source === source;
-                const matchType = type === 'all' || q.type === type;
-                const matchKw = !kw || (q.question || '').toLowerCase().includes(kw) || (q.answer || '').toLowerCase().includes(kw);
-                return matchSrc && matchType && matchKw;
-            });
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">没有匹配的题目</div>`;
-                return;
-            }
-
-            container.innerHTML = filtered.map(q => {
-                const isChecked = window.selectedExamQIds.has(q.id);
-                return `
-                    <label class="flex items-start gap-2 text-xs bg-slate-50 hover:bg-indigo-50/50 p-2.5 rounded-lg border border-slate-200 cursor-pointer transition">
-                        <input type="checkbox" value="${q.id}" ${isChecked ? 'checked' : ''} onchange="toggleQuestionSelect(${q.id}, this.checked)" class="mt-0.5 rounded text-amber-600 focus:ring-amber-500">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-1.5 mb-1">
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${getTypeBadgeClass(q.type)}">${q.type}</span>
-                                <span class="text-slate-400 truncate text-[10px]">${q.source}</span>
-                            </div>
-                            <div class="text-slate-800 font-medium leading-snug break-all">${q.question}</div>
-                        </div>
-                    </label>
-                `;
-            }).join('');
-
-            updateAdminStats();
-            renderAdminPreview();
-        }
-
-        // 单题选中/取消
-        function toggleQuestionSelect(qId, isChecked) {
-            if (isChecked) {
-                window.selectedExamQIds.add(qId);
-            } else {
-                window.selectedExamQIds.delete(qId);
-            }
-            updateAdminStats();
-            renderAdminPreview();
-        }
-
-        // 勾选当前筛选出的所有题目
-        function selectAllFiltered(check = true) {
-            const source = document.getElementById('adminSourceSelect')?.value || 'all';
-            const type = document.getElementById('adminTypeSelect')?.value || 'all';
-            const kw = (document.getElementById('adminSearchKw')?.value || '').toLowerCase().trim();
-
-            (window.allQuestions || []).forEach(q => {
-                const matchSrc = source === 'all' || q.source === source;
-                const matchType = type === 'all' || q.type === type;
-                const matchKw = !kw || (q.question || '').toLowerCase().includes(kw) || (q.answer || '').toLowerCase().includes(kw);
-
-                if (matchSrc && matchType && matchKw) {
-                    if (check) window.selectedExamQIds.add(q.id);
-                    else window.selectedExamQIds.delete(q.id);
-                }
-            });
-
-            renderAdminSelect();
-        }
-
-        // 清空已选题目
-        function clearAllSelected() {
-            window.selectedExamQIds.clear();
-            renderAdminSelect();
-        }
-
-        // 从预览中直接剔除题目
-        function removeFromExam(qId) {
-            window.selectedExamQIds.delete(qId);
-            renderAdminSelect();
-        }
-
-        // 实时更新已选统计
-        function updateAdminStats() {
-            const total = window.selectedExamQIds.size;
-            const countEl = document.getElementById('adminSelectedCount');
-            if (countEl) countEl.innerText = total;
-
-            const selectedQs = (window.allQuestions || []).filter(q => window.selectedExamQIds.has(q.id));
-            const fillCount = selectedQs.filter(q => q.type === '填空题').length;
-            const choiceCount = selectedQs.filter(q => q.type === '选择题').length;
-            const saqCount = selectedQs.filter(q => q.type === '简答题').length;
-
-            const detailEl = document.getElementById('adminSelectedDetail');
-            if (detailEl) detailEl.innerText = `(填空 ${fillCount} | 选择 ${choiceCount} | 简答 ${saqCount})`;
-        }
-
-        // 渲染右侧试卷预览卷面
-        function renderAdminPreview() {
-            const container = document.getElementById('adminPreviewContainer');
-            if (!container) return;
-
-            if (window.selectedExamQIds.size === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 text-slate-400 text-xs">
-                        <i class="fa-solid fa-list-check text-2xl mb-2 text-slate-300"></i>
-                        <p>暂未选择任何题目</p>
-                        <p class="text-[10px] mt-1 text-slate-300">在左侧勾选题目即可实时预览组卷结构</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const selectedQs = (window.allQuestions || []).filter(q => window.selectedExamQIds.has(q.id));
-
-            container.innerHTML = selectedQs.map((q, idx) => `
-                <div class="bg-white p-3 rounded-lg border border-amber-200/80 shadow-sm relative group">
-                    <button onclick="removeFromExam(${q.id})" class="absolute right-2 top-2 text-slate-300 hover:text-rose-500 text-xs transition" title="移除此题">
-                        <i class="fa-solid fa-circle-xmark"></i>
-                    </button>
-                    <div class="flex items-center gap-1.5 mb-1">
-                        <span class="text-xs font-bold text-amber-700">#${idx+1}</span>
-                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${getTypeBadgeClass(q.type)}">${q.type}</span>
-                    </div>
-                    <div class="text-xs font-medium text-slate-800 pr-5 leading-relaxed">${q.question}</div>
-                </div>
-            `).join('');
-        }
-
-        // 题型 Badge 样式辅助
-        function getTypeBadgeClass(type) {
-            switch(type) {
-                case '填空题': return 'bg-blue-100 text-blue-700';
-                case '选择题': return 'bg-purple-100 text-purple-700';
-                case '判断题': return 'bg-emerald-100 text-emerald-700'; // 👈 判断题样式
-                case '简答题': return 'bg-orange-100 text-orange-700';
-                default: return 'bg-slate-100 text-slate-600';
-            }
-        }
-
-        // 1. 发布新试卷（包含开始与结束时间）
-        async function createExam() {
-            const title = document.getElementById('newExamTitle').value.trim();
-            const startTimeVal = document.getElementById('newExamStart').value;
-            const endTimeVal = document.getElementById('newExamEnd').value;
-            const qIds = Array.from(window.selectedExamQIds);
-
-            if (!title) return alert('请输入试卷名称！');
-            if (!startTimeVal || !endTimeVal) return alert('请设置完整的考试开始时间与结束时间！');
-            
-            const startTime = new Date(startTimeVal);
-            const endTime = new Date(endTimeVal);
-            if (startTime >= endTime) return alert('考试结束时间必须晚于开始时间！');
-            if (qIds.length === 0) return alert('请至少选择一道题目！');
-
-            try {
-                const { error } = await window.db.from('exams').insert([{ 
-                    title, 
-                    question_ids: qIds,
-                    start_time: startTime.toISOString(),
-                    end_time: endTime.toISOString()
-                }]);
-                if (error) throw error;
-
-                alert('🎉 试卷发布成功！员工将在您设定的考试时间段内可见并参加考试。');
-                document.getElementById('newExamTitle').value = '';
-                document.getElementById('newExamStart').value = '';
-                document.getElementById('newExamEnd').value = '';
-                clearAllSelected();
-                await loadExamList();
-                switchTab('exam');
-            } catch (err) {
-                console.error("发布失败:", err);
-                alert("发布试卷失败：" + err.message);
-            }
-        }
-    </script>
+    <!-- 4. 按顺序加载拆分后的 JS 模块 -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/review.js"></script>
+    <script src="js/exam.js"></script>
+    <script src="js/admin.js"></script>
 </body>
 </html>
