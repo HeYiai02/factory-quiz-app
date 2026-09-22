@@ -119,6 +119,8 @@
     // 1. 显式在 window 全局挂载变量，确保所有函数都能访问
     window.db = null;
     window.currentUser = null;
+    window.allQuestions = [];
+    window.reviewMode = 'recite';
 
     // 2. 初始化 Supabase 数据库
     async function initSystem() {
@@ -220,19 +222,50 @@
         }
 
         // 视图 1：背题/刷题渲染
-        function setReviewMode(m) { reviewMode = m; renderReviewQuestions(); }
+        // 切换背题/刷题模式
+        function setReviewMode(m) { 
+            window.reviewMode = m; 
+
+            // 更新按钮高亮样式
+            const btnRecite = document.getElementById('btnRecite');
+            const btnQuiz = document.getElementById('btnQuiz');
+            if (btnRecite && btnQuiz) {
+                btnRecite.className = m === 'recite' 
+                    ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white' 
+                    : 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600';
+                btnQuiz.className = m === 'self' 
+                    ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white' 
+                    : 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600';
+            }
+
+            renderReviewQuestions(); 
+        }
+
+        // 渲染题库复习列表
         function renderReviewQuestions() {
-            const kw = document.getElementById('reviewSearch').value.toLowerCase();
+            const searchInput = document.getElementById('reviewSearch');
+            const kw = (searchInput ? searchInput.value : '').toLowerCase().trim();
             const container = document.getElementById('reviewContainer');
-            const list = allQuestions.filter(q => q.question.toLowerCase().includes(kw) || q.answer.toLowerCase().includes(kw));
+
+            if (!container) return;
+
+            const list = (window.allQuestions || []).filter(q => 
+                (q.question || '').toLowerCase().includes(kw) || 
+                (q.answer || '').toLowerCase().includes(kw)
+            );
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">没有找到符合条件的题目</div>`;
+                return;
+            }
 
             container.innerHTML = list.map((q, idx) => `
                 <div class="bg-white p-4 rounded-xl border border-slate-200">
                     <div class="text-xs text-indigo-600 font-semibold mb-1">[${q.source}] ${q.type}</div>
                     <div class="font-medium text-sm text-slate-800">${idx+1}. ${q.question}</div>
-                    ${reviewMode === 'recite' ? 
-                        `<div class="mt-2 p-2 bg-amber-50 text-amber-900 rounded text-xs border border-amber-200">标答：${q.answer}</div>` : 
-                        `<details class="mt-2 text-xs text-slate-400"><summary class="cursor-pointer text-indigo-600">点击查看答案</summary><div class="mt-1 text-slate-700">${q.answer}</div></details>`}
+                    ${window.reviewMode === 'recite' ? 
+                        `<div class="mt-2 p-2 bg-amber-50 text-amber-900 rounded text-xs border border-amber-200 font-medium">标答：${q.answer}</div>` : 
+                        `<details class="mt-2 text-xs text-slate-400"><summary class="cursor-pointer text-indigo-600">点击查看答案</summary><div class="mt-1 text-slate-700 whitespace-pre-line">${q.answer}</div></details>`}
                 </div>
             `).join('');
         }
