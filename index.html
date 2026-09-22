@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 👈 1. 禁用手机端缩放限制，固定 1.0 比例，提升 App 级手感 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>工厂知识点考核平台</title>
     <!-- 引入样式与第三方依赖库 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -10,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen">
+<body class="bg-slate-100 text-slate-800 min-h-screen select-none">
 
     <!-- 1. 登录界面 -->
     <div id="loginView" class="min-h-screen flex items-center justify-center p-4">
@@ -270,24 +271,18 @@
                 </div>
 
                 <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="block font-semibold">标准答案</label>
-                        <!-- <div id="judgmentHelperArea" class="hidden gap-1.5">
-                            <button type="button" onclick="setJudgmentAnswer('正确')" class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100">正确 (对)</button>
-                            <button type="button" onclick="setJudgmentAnswer('错误')" class="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100">错误 (错)</button>
-                        </div> -->
-                    </div>
+                    <label class="block font-semibold mb-1">标准答案</label>
                     <textarea id="formAnswer" placeholder="输入标准答案..." class="w-full p-2 border rounded-lg outline-none h-16 focus:ring-2 focus:ring-indigo-500"></textarea>
-                    <!-- 2. 判断题专属单选按钮 (切换到判断题时自动显示，文本框自动隐藏) -->
+                    
                     <div id="formAnswerJudgmentArea" class="hidden gap-6 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="judgmentAnswerRadio" value="正确" class="text-indigo-600 focus:ring-indigo-500" checked>
-                                <span class="font-semibold text-emerald-700">正确 (对)</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="judgmentAnswerRadio" value="错误" class="text-indigo-600 focus:ring-indigo-500">
-                                <span class="font-semibold text-rose-700">错误 (错)</span>
-                            </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="judgmentAnswerRadio" value="正确" class="text-indigo-600 focus:ring-indigo-500" checked>
+                            <span class="font-semibold text-emerald-700">正确 (对)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="judgmentAnswerRadio" value="错误" class="text-indigo-600 focus:ring-indigo-500">
+                            <span class="font-semibold text-rose-700">错误 (错)</span>
+                        </label>
                     </div>
                 </div>
 
@@ -295,8 +290,8 @@
                     <label class="block font-semibold mb-1">题目附图 (可选)</label>
                     <input type="file" id="formImageFile" accept="image/*" class="w-full p-1 border rounded-lg text-xs">
                     <div id="currentImagePreview" class="mt-2 hidden">
-                        <span class="text-[10px] text-slate-400 block mb-1">已有图片预览：</span>
-                        <img id="previewImgSrc" src="" class="h-24 rounded border object-contain bg-slate-50">
+                        <span class="text-[10px] text-slate-400 block mb-1">已有图片（点击可预览大图）：</span>
+                        <img id="previewImgSrc" src="" onclick="previewImage(this.src)" class="h-24 rounded border object-contain bg-slate-50 cursor-pointer hover:opacity-80 transition">
                     </div>
                 </div>
             </div>
@@ -308,7 +303,15 @@
         </div>
     </div>
 
-    <!-- 4. 按顺序加载拆分后的 JS 模块 -->
+    <!-- 👈 4. 全局图片放大预览 Modal (点击图片弹窗全屏大图) -->
+    <div id="imagePreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 cursor-zoom-out" onclick="closeImagePreview()">
+        <div class="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center" onclick="event.stopPropagation()">
+            <img id="imagePreviewTarget" src="" class="max-h-[85vh] max-w-full rounded-lg shadow-2xl object-contain bg-slate-900/50">
+            <button onclick="closeImagePreview()" class="absolute -top-10 right-0 text-white hover:text-slate-300 text-lg font-bold bg-black/40 px-3 py-1 rounded-full border border-white/20">✕ 关闭</button>
+        </div>
+    </div>
+
+    <!-- 5. 加载 JS 模块 -->
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/review.js"></script>
