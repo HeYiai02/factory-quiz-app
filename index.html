@@ -244,7 +244,7 @@
             }
 
             window.currentUser = data;
-            document.getElementById('userInfo').innerText = `${currentUser.name} (${currentUser.role === 'admin' ? '管理员' : '员工'})`;
+            document.getElementById('userInfo').innerText = currentUser.name;
             document.getElementById('loginView').classList.add('hidden');
             document.getElementById('mainView').classList.remove('hidden');
 
