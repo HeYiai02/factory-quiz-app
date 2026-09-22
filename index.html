@@ -112,54 +112,70 @@
     </div>
 
     <script>
-// 1. 【必须放在最顶部】声明全局变量
-    let db = null;
-    let currentUser = null;
-    let allQuestions = [];
-    let reviewMode = 'recite';
+    // 1. 显式在 window 全局挂载变量，确保所有函数都能访问
+    window.db = null;
+    window.currentUser = null;
 
-    // 2. 初始化系统与 Supabase 客户端
+    // 2. 初始化 Supabase 数据库
     async function initSystem() {
         try {
             const response = await fetch('/api/config');
+            if (!response.ok) {
+                throw new Error(`配置接口响应异常: ${response.status}`);
+            }
             const config = await response.json();
-            
-            // 注意：这里不要加 const 或 let，直接给外层的全局变量 db 赋值
-            db = supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
-            console.log("Supabase 初始化成功");
+
+            // 赋值给全局 window.db
+            window.db = supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+            console.log("✅ Supabase 初始化成功");
         } catch (error) {
-            console.error("无法加载系统配置:", error);
-            alert("系统配置加载失败，请检查 Cloudflare 环境变量设置。");
+            console.error("❌ 初始化失败:", error);
+            alert("系统配置加载失败，请检查 Cloudflare 环境变量或网络配置！");
         }
     }
 
-    // 页面加载完成后立即执行初始化
+    // 页面 DOM 加载完成后运行初始化
     window.addEventListener('DOMContentLoaded', initSystem);
 
-    // 3. 登录逻辑
+    // 3. 登录处理逻辑
     async function handleLogin() {
-        // 增加防御性校验：如果 API 还在请求中，提示用户稍等
-        if (!db) {
-            return alert('系统配置正在加载中，请稍等 1~2 秒后重试登录...');
+        // 防御校验：数据库未初始化完成时提示
+        if (!window.db) {
+            return alert('系统数据库正在连接中，请稍等 1~2 秒后重试登录...');
         }
 
         const empId = document.getElementById('empIdInput').value.trim();
         if (!empId) return alert('请输入工号');
 
-        const { data, error } = await db.from('users').select('*').eq('emp_id', empId).single();
-        if (error || !data) return alert('工号不存在，请联系管理员！');
+        try {
+            const { data, error } = await window.db
+                .from('users')
+                .select('*')
+                .eq('emp_id', empId)
+                .single();
 
-        currentUser = data;
-        document.getElementById('userInfo').innerText = `${currentUser.name} (${currentUser.role === 'admin' ? '管理员' : '员工'})`;
-        document.getElementById('loginView').classList.add('hidden');
-        document.getElementById('mainView').classList.remove('hidden');
+            if (error || !data) {
+                return alert('工号不存在，请联系管理员！');
+            }
 
-        if (currentUser.role === 'admin') {
-            document.getElementById('tab-admin').classList.remove('hidden');
+            window.currentUser = data;
+            document.getElementById('userInfo').innerText = `${currentUser.name} (${currentUser.role === 'admin' ? '管理员' : '员工'})`;
+            document.getElementById('loginView').classList.add('hidden');
+            document.getElementById('mainView').classList.remove('hidden');
+
+            if (currentUser.role === 'admin') {
+                document.getElementById('tab-admin').classList.remove('hidden');
+            }
+
+            await loadQuestions();
+        } catch (err) {
+            console.error("登录异常:", err);
+            alert("登录过程发生错误，请查看控制台。");
         }
-
-        await loadQuestions();
     }
+
+    // 显式挂载 handleLogin 到 window，避免 HTML 中的 onclick 找不到函数
+    window.handleLogin = handleLogin;
 
         function logout() { location.reload(); }
 
