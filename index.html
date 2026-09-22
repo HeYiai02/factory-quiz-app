@@ -24,9 +24,13 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">员工工号</label>
-                    <input type="text" id="empIdInput" placeholder="例如：1001" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+                    <!-- 已将 placeholder 改为 "例：0038***" -->
+                    <input type="text" id="empIdInput" placeholder="例：0038***" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
                 </div>
-                <button onclick="handleLogin()" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition">登录平台</button>
+                <!-- 增加 id="loginBtn" 以便控制 Loading 状态 -->
+                <button id="loginBtn" onclick="handleLogin()" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                    登录平台
+                </button>
             </div>
         </div>
     </div>
@@ -139,13 +143,17 @@
 
     // 3. 登录处理逻辑
     async function handleLogin() {
-        // 防御校验：数据库未初始化完成时提示
         if (!window.db) {
             return alert('系统数据库正在连接中，请稍等 1~2 秒后重试登录...');
         }
 
         const empId = document.getElementById('empIdInput').value.trim();
         if (!empId) return alert('请输入工号');
+
+        // 1. 立即给按钮增加 Loading 效果（极大消除等待时的卡顿感）
+        const loginBtn = document.getElementById('loginBtn');
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> 登录验证中...`;
 
         try {
             const { data, error } = await window.db
@@ -155,7 +163,11 @@
                 .single();
 
             if (error || !data) {
-                return alert('工号不存在，请联系管理员！');
+                alert('工号不存在，请联系管理员！');
+                // 恢复按钮状态
+                loginBtn.disabled = false;
+                loginBtn.innerText = '登录平台';
+                return;
             }
 
             window.currentUser = data;
@@ -163,14 +175,21 @@
             document.getElementById('loginView').classList.add('hidden');
             document.getElementById('mainView').classList.remove('hidden');
 
+            // 2. 严格权限控制：如果是 admin 显式移除 hidden，如果是普通员工强制添加 hidden
+            const adminTab = document.getElementById('tab-admin');
             if (currentUser.role === 'admin') {
-                document.getElementById('tab-admin').classList.remove('hidden');
+                adminTab.classList.remove('hidden');
+            } else {
+                adminTab.classList.add('hidden');
             }
 
             await loadQuestions();
         } catch (err) {
             console.error("登录异常:", err);
             alert("登录过程发生错误，请查看控制台。");
+            // 恢复按钮状态
+            loginBtn.disabled = false;
+            loginBtn.innerText = '登录平台';
         }
     }
 
