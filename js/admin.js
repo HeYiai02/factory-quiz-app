@@ -127,41 +127,32 @@ function setJudgmentAnswer(val) {
 }
 // 1. 题型切换时，控制答案输入控件的显隐
 // 2. 题型切换控制：判断题自动开启【只读】并弹出按钮
+// 控制题型切换时表单元素的显隐与互斥
 function toggleFormOptions() {
     const type = document.getElementById('formType').value;
     const optArea = document.getElementById('formOptionsArea');
-    const judgmentHelper = document.getElementById('judgmentHelperArea');
     const answerTextarea = document.getElementById('formAnswer');
+    const answerJudgmentArea = document.getElementById('formAnswerJudgmentArea');
 
-    // 1. 控制选择题动态选项区
+    // 防御校验，避免 DOM 节点不存在时报错
+    if (!optArea || !answerTextarea || !answerJudgmentArea) return;
+
+    // 1. 选择题选项区域显隐
     if (type === '选择题') {
         optArea.classList.remove('hidden');
     } else {
         optArea.classList.add('hidden');
     }
 
-    // 2. 控制判断题：显现快捷按钮，并将文本框限制为【只读 + 禁止键盘输入】
+    // 2. 判断题答案单选框与常规文本框的互斥切换
     if (type === '判断题') {
-        judgmentHelper.classList.remove('hidden');
-        judgmentHelper.classList.add('flex');
-
-        // 设置文本框为只读，并置灰样式
-        answerTextarea.readOnly = true;
-        answerTextarea.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
-        answerTextarea.placeholder = '请点击上方【正确】或【错误】按钮设置答案...';
-
-        // 若当前无值或内容不规范，默认自动设定为"正确"
-        if (answerTextarea.value !== '正确' && answerTextarea.value !== '错误') {
-            answerTextarea.value = '正确';
-        }
+        answerTextarea.classList.add('hidden');
+        answerJudgmentArea.classList.remove('hidden');
+        answerJudgmentArea.classList.add('flex');
     } else {
-        // 非判断题：恢复文本框正常打字功能
-        judgmentHelper.classList.add('hidden');
-        judgmentHelper.classList.remove('flex');
-
-        answerTextarea.readOnly = false;
-        answerTextarea.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
-        answerTextarea.placeholder = '输入标准答案...';
+        answerTextarea.classList.remove('hidden');
+        answerJudgmentArea.classList.add('hidden');
+        answerJudgmentArea.classList.remove('flex');
     }
 }
 
