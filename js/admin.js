@@ -123,27 +123,34 @@ function setJudgmentAnswer(val) {
     document.getElementById('formAnswer').value = val;
 }
 
+// 1. 题型切换时，控制答案输入控件的显隐
 function toggleFormOptions() {
     const type = document.getElementById('formType').value;
     const optArea = document.getElementById('formOptionsArea');
-    const judgmentHelper = document.getElementById('judgmentHelperArea');
+    const answerTextarea = document.getElementById('formAnswer');
+    const answerJudgmentArea = document.getElementById('formAnswerJudgmentArea');
 
+    // 选择题选项区显隐
     if (type === '选择题') {
         optArea.classList.remove('hidden');
     } else {
         optArea.classList.add('hidden');
     }
 
+    // 判断题答案单选框与常规文本框的互斥切换
     if (type === '判断题') {
-        judgmentHelper.classList.remove('hidden');
-        judgmentHelper.classList.add('flex');
+        answerTextarea.classList.add('hidden');
+        answerJudgmentArea.classList.remove('hidden');
+        answerJudgmentArea.classList.add('flex');
     } else {
-        judgmentHelper.classList.add('hidden');
-        judgmentHelper.classList.remove('flex');
+        answerTextarea.classList.remove('hidden');
+        answerJudgmentArea.classList.add('hidden');
+        answerJudgmentArea.classList.remove('flex');
     }
 }
 
 // 4. 打开与关闭题目 Modal（已清除重复定义[cite: 5]）
+// 2. 打开弹窗时，还原判断题的“对/错”勾选状态
 function openQuestionModal(qId = null) {
     const modal = document.getElementById('questionModal');
     if (!modal) return;
@@ -163,6 +170,15 @@ function openQuestionModal(qId = null) {
             
             renderOptionInputs(Array.isArray(q.options) ? q.options : []);
 
+            // 还原判断题的对错单选状态
+            if (q.type === '判断题') {
+                const val = q.answer || '正确';
+                const radios = document.getElementsByName('judgmentAnswerRadio');
+                radios.forEach(r => {
+                    r.checked = (r.value === val || (val.includes('对') && r.value === '正确') || (val.includes('错') && r.value === '错误'));
+                });
+            }
+
             if (q.image_url) {
                 document.getElementById('currentImagePreview').classList.remove('hidden');
                 document.getElementById('previewImgSrc').src = q.image_url;
@@ -175,6 +191,11 @@ function openQuestionModal(qId = null) {
         document.getElementById('formType').value = '填空题';
         document.getElementById('formQuestion').value = '';
         document.getElementById('formAnswer').value = '';
+        
+        // 默认将判断题重置为“正确”
+        const radios = document.getElementsByName('judgmentAnswerRadio');
+        if (radios.length > 0) radios[0].checked = true;
+
         renderOptionInputs([]);
         document.getElementById('currentImagePreview').classList.add('hidden');
     }
@@ -207,14 +228,22 @@ async function uploadImageToStorage(file) {
     return publicUrlData.publicUrl;
 }
 
-// 保存题目提交
+// 3. 保存提交时，根据题型自动提取判断题选中的“对/错”值
 async function saveQuestionSubmit() {
     const qId = document.getElementById('editQId').value;
     const source = document.getElementById('formSource').value.trim();
     const type = document.getElementById('formType').value;
     const question = document.getElementById('formQuestion').value.trim();
-    const answer = document.getElementById('formAnswer').value.trim();
     const imageFile = document.getElementById('formImageFile').files[0];
+
+    // 提取标准答案：判断题从单选框获取，其他题型从文本框获取
+    let answer = '';
+    if (type === '判断题') {
+        const checkedRadio = document.querySelector('input[name="judgmentAnswerRadio"]:checked');
+        answer = checkedRadio ? checkedRadio.value : '正确';
+    } else {
+        answer = document.getElementById('formAnswer').value.trim();
+    }
 
     if (!source || !question || !answer) {
         return alert('请填写完整的内容（所属模块、题目描述、标准答案）！');
