@@ -278,7 +278,9 @@
             <div class="space-y-3 text-xs">
                 <div>
                     <label class="block font-semibold mb-1">所属试卷/模块</label>
-                    <input type="text" id="formSource" placeholder="例如：TCN相关考核" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="text" id="formSource" list="sourceDatalist" placeholder="可直接手动输入新模块，或从下拉列表选择..." class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <!-- 👈 动态下拉可选项列表 -->
+                        <datalist id="sourceDatalist"></datalist>
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">题目类型</label>

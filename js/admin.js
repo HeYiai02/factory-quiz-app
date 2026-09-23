@@ -158,56 +158,109 @@ function toggleFormOptions() {
 
 // 4. 打开与关闭题目 Modal（已清除重复定义[cite: 5]）
 // 2. 打开弹窗时，还原判断题的“对/错”勾选状态
-function openQuestionModal(qId = null) {
+// 1. 动态填充并按最新创建时间倒序排列“所属试卷/模块”下拉选项
+function populateSourceDatalist() {
+    const datalist = document.getElementById('sourceDatalist');
+    if (!datalist || !window.allQuestions || window.allQuestions.length === 0) return;
+
+    const sourceLatestTimeMap = {};
+
+    window.allQuestions.forEach(q => {
+        if (!q.source) return;
+        // 优先按 created_at 时间戳比较，没有则按 ID 兜底
+        const timeKey = q.created_at ? new Date(q.created_at).getTime() : (q.id || 0);
+
+        if (!sourceLatestTimeMap[q.source] || timeKey > sourceLatestTimeMap[q.source]) {
+            sourceLatestTimeMap[q.source] = timeKey;
+        }
+    });
+
+    // 按时间倒序排序 (最新创建/使用的模块置顶)
+    const sortedSources = Object.keys(sourceLatestTimeMap).sort((a, b) => {
+        return sourceLatestTimeMap[b] - sourceLatestTimeMap[a];
+    });
+
+    datalist.innerHTML = sortedSources.map(s => `<option value="${s}"></option>`).join('');
+}
+
+// 2. 打开新增/编辑题目弹窗 (覆盖原函数)
+function openQuestionModal(editQ = null) {
     const modal = document.getElementById('questionModal');
     if (!modal) return;
-    modal.classList.remove('hidden');
 
-    document.getElementById('editQId').value = qId || '';
-    document.getElementById('modalTitle').innerText = qId ? '编辑题目' : '新增题目';
-    document.getElementById('formImageFile').value = '';
+    // 👈 刷新并生成按最新时间倒序的所属模块下拉列表
+    populateSourceDatalist();
 
-    if (qId) {
-        const q = window.allQuestions.find(item => item.id === qId);
-        if (q) {
-            document.getElementById('formSource').value = q.source || '';
-            document.getElementById('formType').value = q.type || '填空题';
-            document.getElementById('formQuestion').value = q.question || '';
-            document.getElementById('formAnswer').value = q.answer || '';
-            
-            renderOptionInputs(Array.isArray(q.options) ? q.options : []);
+    const titleEl = document.getElementById('modalTitle');
+    const editIdEl = document.getElementById('editQId');
+    const sourceInput = document.getElementById('formSource');
+    const typeSelect = document.getElementById('formType');
+    const questionInput = document.getElementById('formQuestion');
+    const answerInput = document.getElementById('formAnswer');
+    const imageFileInput = document.getElementById('formImageFile');
+    const currentImagePreview = document.getElementById('currentImagePreview');
+    const previewImgSrc = document.getElementById('previewImgSrc');
 
-            // 还原判断题的对错单选状态
-            if (q.type === '判断题') {
-                const val = q.answer || '正确';
-                const radios = document.getElementsByName('judgmentAnswerRadio');
-                radios.forEach(r => {
-                    r.checked = (r.value === val || (val.includes('对') && r.value === '正确') || (val.includes('错') && r.value === '错误'));
-                });
-            }
+    // 重置文件选择框
+    if (imageFileInput) imageFileInput.value = '';
 
-            if (q.image_url) {
-                document.getElementById('currentImagePreview').classList.remove('hidden');
-                document.getElementById('previewImgSrc').src = q.image_url;
-            } else {
-                document.getElementById('currentImagePreview').classList.add('hidden');
+    if (editQ) {
+        // --- 编辑状态 ---
+        if (titleEl) titleEl.innerText = '编辑题目';
+        if (editIdEl) editIdEl.value = editQ.id;
+        if (sourceInput) sourceInput.value = editQ.source || '';
+        if (typeSelect) typeSelect.value = editQ.type || '填空题';
+        if (questionInput) questionInput.value = editQ.question || '';
+        if (answerInput) answerInput.value = editQ.answer || '';
+        
+        // 判断题单选框处理
+        if (editQ.type === '判断题') {
+            const isWrong = editQ.answer && (editQ.answer.includes('错') || editQ.answer.includes('错误'));
+            const radios = document.getElementsByName('judgmentAnswerRadio');
+            if (radios.length >= 2) {
+                radios[0].checked = !isWrong;
+                radios[1].checked = isWrong;
             }
         }
-    } else {
-        document.getElementById('formSource').value = '';
-        document.getElementById('formType').value = '填空题';
-        document.getElementById('formQuestion').value = '';
-        document.getElementById('formAnswer').value = '';
-        
-        // 默认将判断题重置为“正确”
-        const radios = document.getElementsByName('judgmentAnswerRadio');
-        if (radios.length > 0) radios[0].checked = true;
 
-        renderOptionInputs([]);
-        document.getElementById('currentImagePreview').classList.add('hidden');
+        // 选择题选项填充
+        if (editQ.type === '选择题' && Array.isArray(editQ.options)) {
+            renderFormOptions(editQ.options);
+        } else {
+            renderFormOptions([]);
+        }
+
+        // 图片预览处理
+        if (editQ.image_url && currentImagePreview && previewImgSrc) {
+            previewImgSrc.src = editQ.image_url;
+            currentImagePreview.classList.remove('hidden');
+        } else if (currentImagePreview) {
+            currentImagePreview.classList.add('hidden');
+        }
+    } else {
+        // --- 新增状态 ---
+        if (titleEl) titleEl.innerText = '新增题目';
+        if (editIdEl) editIdEl.value = '';
+        if (sourceInput) sourceInput.value = '';
+        if (typeSelect) typeSelect.value = '填空题';
+        if (questionInput) questionInput.value = '';
+        if (answerInput) answerInput.value = '';
+        
+        // 默认选择“正确”
+        const radios = document.getElementsByName('judgmentAnswerRadio');
+        if (radios.length >= 1) radios[0].checked = true;
+
+        // 默认初始化 4 个空白选择题选项
+        renderFormOptions(['', '', '', '']);
+
+        if (currentImagePreview) currentImagePreview.classList.add('hidden');
     }
 
+    // 根据选中的题型切换选项框/判断框的显隐
     toggleFormOptions();
+    
+    // 显示 Modal 弹窗
+    modal.classList.remove('hidden');
 }
 
 function closeQuestionModal() {
@@ -488,4 +541,34 @@ async function createExam() {
         console.error("发布失败:", err);
         alert("发布试卷失败：" + err.message);
     }
+}
+
+
+// 动态填充并按最新创建时间倒序排列“所属试卷/模块”下拉选项
+function populateSourceDatalist() {
+    const datalist = document.getElementById('sourceDatalist');
+    if (!datalist || !window.allQuestions || window.allQuestions.length === 0) return;
+
+    // 1. 按模块名称分组，找出每个模块中“最新一题”的时间/ID
+    const sourceLatestTimeMap = {};
+
+    window.allQuestions.forEach(q => {
+        if (!q.source) return;
+        
+        // 优先获取 created_at 的时间戳，若无则退而求其次使用自增 ID
+        const timeKey = q.created_at ? new Date(q.created_at).getTime() : (q.id || 0);
+
+        // 记录该模块出现的最新时间
+        if (!sourceLatestTimeMap[q.source] || timeKey > sourceLatestTimeMap[q.source]) {
+            sourceLatestTimeMap[q.source] = timeKey;
+        }
+    });
+
+    // 2. 将所有模块按“最新出现时间”倒序排序 (最新创建的排在最前)
+    const sortedSources = Object.keys(sourceLatestTimeMap).sort((a, b) => {
+        return sourceLatestTimeMap[b] - sourceLatestTimeMap[a];
+    });
+
+    // 3. 渲染生成 datalist 节点
+    datalist.innerHTML = sortedSources.map(s => `<option value="${s}"></option>`).join('');
 }
