@@ -19,28 +19,11 @@ function setReviewMode(m) {
     renderReviewQuestions(); 
 }
 
-// 动态填充试卷来源下拉菜单
-function populateReviewSources() {
-    const sourceSelect = document.getElementById('reviewSourceSelect');
-    if (!sourceSelect || !window.allQuestions) return;
-
-    // 获取当前保存选中的来源，以便刷新后保持
-    const currentVal = sourceSelect.value;
-
-    // 提取所有不重复的 source 列表
-    const sources = Array.from(new Set(window.allQuestions.map(q => q.source).filter(Boolean)));
-
-    sourceSelect.innerHTML = `<option value="all">所有试卷来源 (全部 ${window.allQuestions.length} 题)</option>` +
-        sources.map(s => `<option value="${s}">${s}</option>`).join('');
-
-    if (sources.includes(currentVal)) {
-        sourceSelect.value = currentVal;
-    }
-}
-
 // 渲染题库复习列表（三维联动筛选：来源 + 题型 + 搜索词）
 function renderReviewQuestions() {
-    populateReviewSources(); // 确保下拉列表始终同步最新库
+    if (typeof window.populateAllSourceDropdowns === 'function') {
+        window.populateAllSourceDropdowns();
+    }
 
     const sourceFilter = document.getElementById('reviewSourceSelect')?.value || 'all';
     const typeFilter = document.getElementById('reviewTypeSelect')?.value || 'all';
@@ -101,3 +84,99 @@ function renderReviewQuestions() {
         </div>
     `).join('');
 }
+
+// 随机自测抽题功能（带按钮 Loading 与成功 Toast 反馈）
+function generateRandomQuiz(btnEl = null) {
+    if (!window.allQuestions || window.allQuestions.length === 0) {
+        showToast("题库为空，无法随机抽题！", "warning");
+        return;
+    }
+
+    // 按钮反馈交互
+    if (btnEl) {
+        btnEl.disabled = true;
+        const originalHtml = btnEl.innerHTML;
+        btnEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 抽题中...`;
+        setTimeout(() => {
+            btnEl.disabled = false;
+            btnEl.innerHTML = originalHtml;
+        }, 400);
+    }
+
+    const shuffled = [...window.allQuestions].sort(() => 0.5 - Math.random()).slice(0, 10);
+    const container = document.getElementById('quizContainer');
+    
+    if (!container) return;
+
+    container.innerHTML = shuffled.map((q, idx) => {
+        let interactiveHtml = '';
+
+        if (q.type === '选择题') {
+            if (Array.isArray(q.options) && q.options.length > 0) {
+                interactiveHtml = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 my-2.5">
+                        ${q.options.map(opt => `
+                            <label class="flex items-start gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/60 transition">
+                                <input type="checkbox" name="quiz_q_${q.id}" value="${opt}" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                                <span class="text-xs text-slate-700 leading-snug">${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                interactiveHtml = `<input type="text" placeholder="填写选择选项（例如：A 或 B,C）..." class="w-full border border-slate-200 p-2.5 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500">`;
+            }
+        } else if (q.type === '判断题') {
+            interactiveHtml = `
+                <div class="flex gap-4 my-2.5">
+                    <label class="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/60 transition flex-1">
+                        <input type="radio" name="quiz_q_${q.id}" value="正确" class="text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-xs text-slate-700 font-semibold">正确 (对)</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/60 transition flex-1">
+                        <input type="radio" name="quiz_q_${q.id}" value="错误" class="text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-xs text-slate-700 font-semibold">错误 (错)</span>
+                    </label>
+                </div>
+            `;
+        } else if (q.type === '填空题') {
+            interactiveHtml = `
+                <input type="text" placeholder="在此填写填空答案..." class="w-full border border-slate-200 p-2.5 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500 my-1">
+            `;
+        } else {
+            interactiveHtml = `
+                <textarea placeholder="在此填写简答回答..." class="w-full border border-slate-200 p-2.5 rounded-xl text-xs h-20 outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed my-1"></textarea>
+            `;
+        }
+
+        return `
+            <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-2 shadow-sm">
+                <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${getTypeBadgeClass(q.type)}">${q.type}</span>
+                        <span class="font-medium text-sm text-slate-800">#${idx+1} ${q.question}</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400">[${q.source}]</span>
+                </div>
+                
+                ${q.image_url ? `<div class="my-2"><img src="${q.image_url}" onclick="previewImage('${q.image_url}')" class="max-h-60 rounded-lg border border-slate-200 object-contain bg-slate-50 cursor-pointer"></div>` : ''}
+
+                ${interactiveHtml}
+
+                <details class="text-xs text-slate-400 pt-1">
+                    <summary class="cursor-pointer text-indigo-600 font-medium hover:underline">对照标准答案</summary>
+                    <div class="mt-1 text-emerald-800 font-medium whitespace-pre-line p-2.5 bg-emerald-50 rounded-lg border border-emerald-100">${q.answer}</div>
+                </details>
+            </div>
+        `;
+    }).join('');
+
+    if (typeof showToast === 'function') {
+        showToast("🎲 已为您随机生成 10 道测试题！", "success");
+    }
+}
+
+// 导出至全局 window
+window.setReviewMode = setReviewMode;
+window.renderReviewQuestions = renderReviewQuestions;
+window.generateRandomQuiz = generateRandomQuiz;

@@ -25,6 +25,10 @@ function switchAdminSubTab(subTab) {
 
 // 2. 渲染题目管理列表
 function renderAdminManageList() {
+    if (typeof window.populateAllSourceDropdowns === 'function') {
+        window.populateAllSourceDropdowns();
+    }
+
     const source = document.getElementById('adminManageSourceSelect')?.value || 'all';
     const type = document.getElementById('adminManageTypeSelect')?.value || 'all';
     const kw = (document.getElementById('adminManageSearch')?.value || '').toLowerCase().trim();
@@ -44,7 +48,7 @@ function renderAdminManageList() {
     }
 
     container.innerHTML = list.map(q => `
-        <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex justify-between items-start gap-4 hover:border-indigo-200 transition">
+        <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex justify-between items-start gap-4 hover:border-indigo-200 transition shadow-sm">
             <div class="space-y-1 flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                     <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${getTypeBadgeClass(q.type)}">${q.type}</span>
@@ -54,8 +58,8 @@ function renderAdminManageList() {
                 <div class="font-medium text-xs text-slate-800 break-all leading-snug">${q.question}</div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
-                <button onclick="openQuestionModal(${q.id})" class="text-xs px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-medium">编辑</button>
-                <button onclick="deleteQuestion(${q.id})" class="text-xs px-2.5 py-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 font-medium">删除</button>
+                <button onclick="openQuestionModal(${q.id})" class="text-xs px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-medium transition active:scale-95">编辑</button>
+                <button onclick="deleteQuestion(${q.id})" class="text-xs px-2.5 py-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 font-medium transition active:scale-95">删除</button>
             </div>
         </div>
     `).join('');
@@ -69,6 +73,11 @@ function renderOptionInputs(optionsArray = []) {
     const opts = optionsArray.length > 0 ? optionsArray : ['', '', '', ''];
     listContainer.innerHTML = '';
     opts.forEach(optVal => addOptionInputRow(optVal));
+}
+
+// 别名，确保 renderFormOptions 双向兼容调用
+function renderFormOptions(optionsArray = []) {
+    renderOptionInputs(optionsArray);
 }
 
 function addOptionInputRow(val = '') {
@@ -119,32 +128,20 @@ function getCollectedOptionValues() {
     return result;
 }
 
-function setJudgmentAnswer(val) {
-    const answerTextarea = document.getElementById('formAnswer');
-    if (answerTextarea) {
-        answerTextarea.value = val;
-    }
-}
-// 1. 题型切换时，控制答案输入控件的显隐
-// 2. 题型切换控制：判断题自动开启【只读】并弹出按钮
-// 控制题型切换时表单元素的显隐与互斥
 function toggleFormOptions() {
     const type = document.getElementById('formType').value;
     const optArea = document.getElementById('formOptionsArea');
     const answerTextarea = document.getElementById('formAnswer');
     const answerJudgmentArea = document.getElementById('formAnswerJudgmentArea');
 
-    // 防御校验，避免 DOM 节点不存在时报错
     if (!optArea || !answerTextarea || !answerJudgmentArea) return;
 
-    // 1. 选择题选项区域显隐
     if (type === '选择题') {
         optArea.classList.remove('hidden');
     } else {
         optArea.classList.add('hidden');
     }
 
-    // 2. 判断题答案单选框与常规文本框的互斥切换
     if (type === '判断题') {
         answerTextarea.classList.add('hidden');
         answerJudgmentArea.classList.remove('hidden');
@@ -156,40 +153,20 @@ function toggleFormOptions() {
     }
 }
 
-// 4. 打开与关闭题目 Modal（已清除重复定义[cite: 5]）
-// 2. 打开弹窗时，还原判断题的“对/错”勾选状态
-// 1. 动态填充并按最新创建时间倒序排列“所属试卷/模块”下拉选项
-function populateSourceDatalist() {
-    const datalist = document.getElementById('sourceDatalist');
-    if (!datalist || !window.allQuestions || window.allQuestions.length === 0) return;
-
-    const sourceLatestTimeMap = {};
-
-    window.allQuestions.forEach(q => {
-        if (!q.source) return;
-        // 优先按 created_at 时间戳比较，没有则按 ID 兜底
-        const timeKey = q.created_at ? new Date(q.created_at).getTime() : (q.id || 0);
-
-        if (!sourceLatestTimeMap[q.source] || timeKey > sourceLatestTimeMap[q.source]) {
-            sourceLatestTimeMap[q.source] = timeKey;
-        }
-    });
-
-    // 按时间倒序排序 (最新创建/使用的模块置顶)
-    const sortedSources = Object.keys(sourceLatestTimeMap).sort((a, b) => {
-        return sourceLatestTimeMap[b] - sourceLatestTimeMap[a];
-    });
-
-    datalist.innerHTML = sortedSources.map(s => `<option value="${s}"></option>`).join('');
-}
-
-// 2. 打开新增/编辑题目弹窗 (覆盖原函数)
+// 4. 打开与关闭题目 Modal
 function openQuestionModal(editQ = null) {
     const modal = document.getElementById('questionModal');
     if (!modal) return;
 
-    // 👈 刷新并生成按最新时间倒序的所属模块下拉列表
-    populateSourceDatalist();
+    // 关键容错：如果是数字/字符串 ID 传进来，自动匹配全局 window.allQuestions 对象
+    if (editQ !== null && typeof editQ !== 'object') {
+        const found = (window.allQuestions || []).find(item => item.id == editQ);
+        if (found) editQ = found;
+    }
+
+    if (typeof window.populateAllSourceDropdowns === 'function') {
+        window.populateAllSourceDropdowns();
+    }
 
     const titleEl = document.getElementById('modalTitle');
     const editIdEl = document.getElementById('editQId');
@@ -201,11 +178,9 @@ function openQuestionModal(editQ = null) {
     const currentImagePreview = document.getElementById('currentImagePreview');
     const previewImgSrc = document.getElementById('previewImgSrc');
 
-    // 重置文件选择框
     if (imageFileInput) imageFileInput.value = '';
 
-    if (editQ) {
-        // --- 编辑状态 ---
+    if (editQ && typeof editQ === 'object') {
         if (titleEl) titleEl.innerText = '编辑题目';
         if (editIdEl) editIdEl.value = editQ.id;
         if (sourceInput) sourceInput.value = editQ.source || '';
@@ -213,7 +188,6 @@ function openQuestionModal(editQ = null) {
         if (questionInput) questionInput.value = editQ.question || '';
         if (answerInput) answerInput.value = editQ.answer || '';
         
-        // 判断题单选框处理
         if (editQ.type === '判断题') {
             const isWrong = editQ.answer && (editQ.answer.includes('错') || editQ.answer.includes('错误'));
             const radios = document.getElementsByName('judgmentAnswerRadio');
@@ -223,14 +197,12 @@ function openQuestionModal(editQ = null) {
             }
         }
 
-        // 选择题选项填充
         if (editQ.type === '选择题' && Array.isArray(editQ.options)) {
             renderFormOptions(editQ.options);
         } else {
             renderFormOptions([]);
         }
 
-        // 图片预览处理
         if (editQ.image_url && currentImagePreview && previewImgSrc) {
             previewImgSrc.src = editQ.image_url;
             currentImagePreview.classList.remove('hidden');
@@ -238,7 +210,6 @@ function openQuestionModal(editQ = null) {
             currentImagePreview.classList.add('hidden');
         }
     } else {
-        // --- 新增状态 ---
         if (titleEl) titleEl.innerText = '新增题目';
         if (editIdEl) editIdEl.value = '';
         if (sourceInput) sourceInput.value = '';
@@ -246,20 +217,15 @@ function openQuestionModal(editQ = null) {
         if (questionInput) questionInput.value = '';
         if (answerInput) answerInput.value = '';
         
-        // 默认选择“正确”
         const radios = document.getElementsByName('judgmentAnswerRadio');
         if (radios.length >= 1) radios[0].checked = true;
 
-        // 默认初始化 4 个空白选择题选项
         renderFormOptions(['', '', '', '']);
 
         if (currentImagePreview) currentImagePreview.classList.add('hidden');
     }
 
-    // 根据选中的题型切换选项框/判断框的显隐
     toggleFormOptions();
-    
-    // 显示 Modal 弹窗
     modal.classList.remove('hidden');
 }
 
@@ -288,7 +254,7 @@ async function uploadImageToStorage(file) {
     return publicUrlData.publicUrl;
 }
 
-// 3. 保存提交时，根据题型自动提取判断题选中的“对/错”值
+// 保存题目提交
 async function saveQuestionSubmit() {
     const qId = document.getElementById('editQId').value;
     const source = document.getElementById('formSource').value.trim();
@@ -296,7 +262,6 @@ async function saveQuestionSubmit() {
     const question = document.getElementById('formQuestion').value.trim();
     const imageFile = document.getElementById('formImageFile').files[0];
 
-    // 提取标准答案：判断题从单选框获取，其他题型从文本框获取
     let answer = '';
     if (type === '判断题') {
         const checkedRadio = document.querySelector('input[name="judgmentAnswerRadio"]:checked');
@@ -306,18 +271,20 @@ async function saveQuestionSubmit() {
     }
 
     if (!source || !question || !answer) {
-        return alert('请填写完整的内容（所属模块、题目描述、标准答案）！');
+        showToast('请填写完整的内容（所属模块、题目描述、标准答案）！', 'warning');
+        return;
     }
 
     const options = type === '选择题' ? getCollectedOptionValues() : [];
 
     if (type === '选择题' && options.length === 0) {
-        return alert('选择题请至少填写一个有效选项！');
+        showToast('选择题请至少填写一个有效选项！', 'warning');
+        return;
     }
 
     const saveBtn = document.getElementById('btnSaveQ');
     saveBtn.disabled = true;
-    saveBtn.innerText = '正在保存...';
+    saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 正在保存...`;
 
     try {
         let imageUrl = null;
@@ -338,12 +305,12 @@ async function saveQuestionSubmit() {
             if (error) throw error;
         }
 
-        alert('🎉 题目保存成功！');
+        showToast('🎉 题目保存成功！', 'success');
         closeQuestionModal();
         await loadQuestions();
     } catch (err) {
         console.error("保存失败:", err);
-        alert("保存题目失败：" + err.message);
+        showToast("保存题目失败：" + err.message, "error");
     } finally {
         saveBtn.disabled = false;
         saveBtn.innerText = '保存题目';
@@ -358,10 +325,10 @@ async function deleteQuestion(qId) {
         const { error } = await window.db.from('questions').delete().eq('id', qId);
         if (error) throw error;
 
-        alert('🗑️ 题目已成功删除！');
+        showToast('🗑️ 题目已成功删除！', 'success');
         await loadQuestions();
     } catch (err) {
-        alert("删除题目失败：" + err.message);
+        showToast("删除题目失败：" + err.message, 'error');
     }
 }
 
@@ -384,6 +351,10 @@ function toggleAdminPreview() {
 }
 
 function renderAdminSelect() {
+    if (typeof window.populateAllSourceDropdowns === 'function') {
+        window.populateAllSourceDropdowns();
+    }
+
     const source = document.getElementById('adminSourceSelect')?.value || 'all';
     const type = document.getElementById('adminTypeSelect')?.value || 'all';
     const kw = (document.getElementById('adminSearchKw')?.value || '').toLowerCase().trim();
@@ -513,13 +484,13 @@ async function createExam() {
     const endTimeVal = document.getElementById('newExamEnd').value;
     const qIds = Array.from(window.selectedExamQIds);
 
-    if (!title) return alert('请输入试卷名称！');
-    if (!startTimeVal || !endTimeVal) return alert('请设置完整的考试开始时间与结束时间！');
+    if (!title) return showToast('请输入试卷名称！', 'warning');
+    if (!startTimeVal || !endTimeVal) return showToast('请设置完整的考试开始时间与结束时间！', 'warning');
     
     const startTime = new Date(startTimeVal);
     const endTime = new Date(endTimeVal);
-    if (startTime >= endTime) return alert('考试结束时间必须晚于开始时间！');
-    if (qIds.length === 0) return alert('请至少选择一道题目！');
+    if (startTime >= endTime) return showToast('考试结束时间必须晚于开始时间！', 'warning');
+    if (qIds.length === 0) return showToast('请至少选择一道题目！', 'warning');
 
     try {
         const { error } = await window.db.from('exams').insert([{ 
@@ -530,7 +501,7 @@ async function createExam() {
         }]);
         if (error) throw error;
 
-        alert('🎉 试卷发布成功！员工将在您设定的考试时间段内可见并参加考试。');
+        showToast('🎉 试卷发布成功！', 'success');
         document.getElementById('newExamTitle').value = '';
         document.getElementById('newExamStart').value = '';
         document.getElementById('newExamEnd').value = '';
@@ -539,36 +510,26 @@ async function createExam() {
         switchTab('exam');
     } catch (err) {
         console.error("发布失败:", err);
-        alert("发布试卷失败：" + err.message);
+        showToast("发布试卷失败：" + err.message, "error");
     }
 }
 
-
-// 动态填充并按最新创建时间倒序排列“所属试卷/模块”下拉选项
-function populateSourceDatalist() {
-    const datalist = document.getElementById('sourceDatalist');
-    if (!datalist || !window.allQuestions || window.allQuestions.length === 0) return;
-
-    // 1. 按模块名称分组，找出每个模块中“最新一题”的时间/ID
-    const sourceLatestTimeMap = {};
-
-    window.allQuestions.forEach(q => {
-        if (!q.source) return;
-        
-        // 优先获取 created_at 的时间戳，若无则退而求其次使用自增 ID
-        const timeKey = q.created_at ? new Date(q.created_at).getTime() : (q.id || 0);
-
-        // 记录该模块出现的最新时间
-        if (!sourceLatestTimeMap[q.source] || timeKey > sourceLatestTimeMap[q.source]) {
-            sourceLatestTimeMap[q.source] = timeKey;
-        }
-    });
-
-    // 2. 将所有模块按“最新出现时间”倒序排序 (最新创建的排在最前)
-    const sortedSources = Object.keys(sourceLatestTimeMap).sort((a, b) => {
-        return sourceLatestTimeMap[b] - sourceLatestTimeMap[a];
-    });
-
-    // 3. 渲染生成 datalist 节点
-    datalist.innerHTML = sortedSources.map(s => `<option value="${s}"></option>`).join('');
-}
+// 导出全局 Window
+window.switchAdminSubTab = switchAdminSubTab;
+window.renderAdminManageList = renderAdminManageList;
+window.renderOptionInputs = renderOptionInputs;
+window.renderFormOptions = renderFormOptions;
+window.addOptionInputRow = addOptionInputRow;
+window.removeOptionInputRow = removeOptionInputRow;
+window.toggleFormOptions = toggleFormOptions;
+window.openQuestionModal = openQuestionModal;
+window.closeQuestionModal = closeQuestionModal;
+window.saveQuestionSubmit = saveQuestionSubmit;
+window.deleteQuestion = deleteQuestion;
+window.toggleAdminPreview = toggleAdminPreview;
+window.renderAdminSelect = renderAdminSelect;
+window.toggleQuestionSelect = toggleQuestionSelect;
+window.selectAllFiltered = selectAllFiltered;
+window.clearAllSelected = clearAllSelected;
+window.removeFromExam = removeFromExam;
+window.createExam = createExam;
