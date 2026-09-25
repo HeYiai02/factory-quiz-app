@@ -1,11 +1,14 @@
 export async function onRequest(context) {
     const { request, env } = context;
     const url = new URL(request.url);
-    const empId = url.searchParams.get('empId');
+    const rawEmpId = url.searchParams.get('empId') || '';
 
-    if (!empId) {
-        return new Response(JSON.stringify({ error: '请提供工号' }), { status: 400 });
+    // 提取数字并截取后 7 位
+    const digitsOnly = rawEmpId.replace(/\D/g, '');
+    if (digitsOnly.length < 7) {
+        return new Response(JSON.stringify({ error: '工号格式不正确，需包含7位数字' }), { status: 400 });
     }
+    const empId = digitsOnly.slice(-7);
 
     try {
         const res = await fetch(`${env.SUPABASE_URL}/rest/v1/users?emp_id=eq.${encodeURIComponent(empId)}&select=*`, {
