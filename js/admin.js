@@ -237,21 +237,13 @@ function closeQuestionModal() {
 // 图片上传辅助函数
 async function uploadImageToStorage(file) {
     if (!file) return null;
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `questions/${fileName}`;
+    const formData = new FormData();
+    formData.append('file', file);
 
-    const { data, error } = await window.db.storage
-        .from('question-images')
-        .upload(filePath, file);
-
-    if (error) throw error;
-
-    const { data: publicUrlData } = window.db.storage
-        .from('question-images')
-        .getPublicUrl(filePath);
-
-    return publicUrlData.publicUrl;
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '图片上传失败');
+    return data.publicUrl;
 }
 
 // 保存题目提交
@@ -296,20 +288,20 @@ async function saveQuestionSubmit() {
         }
 
         const payload = { source, type, question, answer, options, image_url: imageUrl };
+        if (qId) payload.id = parseInt(qId);
 
-        if (qId) {
-            const { error } = await window.db.from('questions').update(payload).eq('id', parseInt(qId));
-            if (error) throw error;
-        } else {
-            const { error } = await window.db.from('questions').insert([payload]);
-            if (error) throw error;
-        }
+
+        const res = await fetch('/api/questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('保存失败');
 
         showToast('🎉 题目保存成功！', 'success');
         closeQuestionModal();
         await loadQuestions();
     } catch (err) {
-        console.error("保存失败:", err);
         showToast("保存题目失败：" + err.message, "error");
     } finally {
         saveBtn.disabled = false;
@@ -320,11 +312,9 @@ async function saveQuestionSubmit() {
 // 删除题目
 async function deleteQuestion(qId) {
     if (!confirm('确定要彻底删除这道题目吗？')) return;
-
     try {
-        const { error } = await window.db.from('questions').delete().eq('id', qId);
-        if (error) throw error;
-
+        const res = await fetch(`/api/questions?id=${qId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('删除失败');
         showToast('🗑️ 题目已成功删除！', 'success');
         await loadQuestions();
     } catch (err) {
@@ -493,13 +483,17 @@ async function createExam() {
     if (qIds.length === 0) return showToast('请至少选择一道题目！', 'warning');
 
     try {
-        const { error } = await window.db.from('exams').insert([{ 
-            title, 
-            question_ids: qIds,
-            start_time: startTime.toISOString(),
-            end_time: endTime.toISOString()
-        }]);
-        if (error) throw error;
+        const res = await fetch('/api/exams', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                title, 
+                question_ids: qIds,
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString()
+            })
+        });
+        if (!res.ok) throw new Error('发布失败');
 
         showToast('🎉 试卷发布成功！', 'success');
         document.getElementById('newExamTitle').value = '';
@@ -509,7 +503,6 @@ async function createExam() {
         await loadExamList();
         switchTab('exam');
     } catch (err) {
-        console.error("发布失败:", err);
         showToast("发布试卷失败：" + err.message, "error");
     }
 }

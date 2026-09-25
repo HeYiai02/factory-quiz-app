@@ -64,8 +64,9 @@ function restoreExamDraft(examTitle) {
 // 加载试卷列表
 async function loadExamList() {
     try {
-        const { data, error } = await window.db.from('exams').select('*').order('created_at', { ascending: false });
-        if (error) throw error;
+        const res = await fetch('/api/exams');
+        if (!res.ok) throw new Error('网络响应异常');
+        const data = await res.json();
 
         const container = document.getElementById('examList');
         if (!container) return;
@@ -148,12 +149,12 @@ async function loadExamList() {
 async function deleteExam(examId, title) {
     if (!confirm(`确定要删除试卷《${title}》吗？此操作不可撤销！`)) return;
     try {
-        const { error } = await window.db.from('exams').delete().eq('id', examId);
-        if (error) throw error;
-        alert("🗑️ 试卷已成功删除！");
+        const res = await fetch(`/api/exams?id=${examId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('删除失败');
+        showToast("🗑️ 试卷已成功删除！", "success");
         await loadExamList();
     } catch (err) {
-        alert("删除试卷失败: " + err.message);
+        showToast("删除试卷失败: " + err.message, "error");
     }
 }
 
