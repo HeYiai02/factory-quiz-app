@@ -24,80 +24,30 @@ async function handleLogin() {
     }
 
     try {
-        // 1. 设置 8 秒强行超时机制，防止移动端网络挂起无限期死等
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('NETWORK_TIMEOUT')), 8000)
-        );
+        // 手机端直接请求同源接口 /api/login，极速响应
+        const res = await fetch(`/api/login?empId=${encodeURIComponent(empId)}`);
+        const result = await res.json();
 
-        // Supabase 查询请求
-        const queryPromise = window.db
-            .from('users')
-            .select('*')
-            .eq('emp_id', empId)
-            .single();
-
-        // 竞速：看查询先返回还是 8 秒先超时
-        const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
-
-        // 2. 精确区分错误类型
-        if (error) {
-            // PGRST116 是 Supabase/PostgREST 返回的“查无此记录”错误码
-            if (error.code === 'PGRST116') {
-                if (typeof showToast === 'function') showToast('工号不存在，请联系管理员！', 'error');
-                else alert('工号不存在，请联系管理员！');
-            } else {
-                console.error('Supabase 登录请求异常:', error);
-                const errMsg = error.message || '网络连接异常';
-                if (typeof showToast === 'function') showToast(`登录失败: ${errMsg}`, 'error');
-                else alert(`登录失败: ${errMsg}`);
-            }
+        if (res.status === 404 || result.error === 'NOT_FOUND') {
+            showToast('工号不存在，请联系管理员！', 'error');
             return;
         }
 
-        if (!data) {
-            if (typeof showToast === 'function') showToast('工号不存在，请联系管理员！', 'error');
-            else alert('工号不存在，请联系管理员！');
+        if (!res.ok) {
+            showToast(`登录失败: ${result.error || '网络连接异常'}`, 'error');
             return;
         }
 
-        // 3. 验证成功，记录当前用户并进入主界面
-        window.currentUser = data;
-        
-        const userInfoEl = document.getElementById('userInfo');
-        if (userInfoEl) {
-            userInfoEl.innerText = `${currentUser.name} (${currentUser.role === 'admin' ? '管理员' : '员工'})`;
-        }
-        
+        // 登录成功！
+        window.currentUser = result.user;
+        document.getElementById('userInfo').innerText = `${currentUser.name} (${currentUser.role === 'admin' ? '管理员' : '员工'})`;
         document.getElementById('loginView')?.classList.add('hidden');
         document.getElementById('mainView')?.classList.remove('hidden');
-
-        // 权限判断：显式隐藏或显示管理员控制台
-        const adminTab = document.getElementById('tab-admin');
-        if (adminTab) {
-            if (currentUser.role === 'admin') {
-                adminTab.classList.remove('hidden');
-            } else {
-                adminTab.classList.add('hidden');
-            }
-        }
-
-        if (typeof showToast === 'function') {
-            showToast(`欢迎回来，${currentUser.name}！`, 'success');
-        }
 
         await loadQuestions();
 
     } catch (err) {
-        console.error("登录异常:", err);
-        if (err.message === 'NETWORK_TIMEOUT') {
-            const timeoutMsg = '网络连接超时！请检查手机网络（4G/5G/Wi-Fi）后重试。';
-            if (typeof showToast === 'function') showToast(timeoutMsg, 'error');
-            else alert(timeoutMsg);
-        } else {
-            const genericMsg = '登录过程发生错误，请稍后重试！';
-            if (typeof showToast === 'function') showToast(genericMsg, 'error');
-            else alert(genericMsg);
-        }
+        showToast('网络异常，请检查手机网络后重试！', 'error');
     } finally {
         // 4. 无论成功与否，必定解禁按钮状态
         if (loginBtn) {
