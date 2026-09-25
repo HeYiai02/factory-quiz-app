@@ -90,7 +90,7 @@ async function handleLogin() {
 
         const userInfoEl = document.getElementById('userInfo');
         if (userInfoEl) {
-            userInfoEl.innerText = `${currentUser.name} (${currentUser.role === 'admin' ? '管理员' : '员工'})`;
+            userInfoEl.innerText = `${currentUser.name}`;
         }
 
         document.getElementById('loginView')?.classList.add('hidden');
