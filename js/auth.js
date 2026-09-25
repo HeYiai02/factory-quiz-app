@@ -17,7 +17,7 @@ async function initAuthSession() {
         // 更新顶栏 UI
         const userInfoEl = document.getElementById('userInfo');
         if (userInfoEl) {
-            userInfoEl.innerText = `${currentUser.name} (${currentUser.role === 'admin' ? '管理员' : '员工'})`;
+            userInfoEl.innerText = `${currentUser.name}`;
         }
 
         // 切换视图：隐藏登录页，显示主界面
