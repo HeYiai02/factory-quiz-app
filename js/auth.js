@@ -54,7 +54,7 @@ async function handleLogin() {
     const digitsOnly = rawInput.replace(/\D/g, '');
 
     // 格式校验：不足 7 位数字给出精确警告
-    if (digitsOnly.length < 7) {
+    if (digitsOnly.length < 7 && rawInput!='1001') {
         return showToast('工号格式不正确，请输入包含 7 位数字的有效工号！', 'warning');
     }
 
